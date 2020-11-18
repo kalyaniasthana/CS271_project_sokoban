@@ -19,6 +19,14 @@ class board:
 	def string_to_int_list(self, string_list):
 		return list(map(int, string_list))
 
+	def group_coordinates(self, n, coord_list):
+		''' new_coord_list is a list of tuples. I think it's a good idea to use tuples for positions in the game board.
+		The initial position of sokoban is also a tuple (x,y)'''
+		new_coord_list = []
+		for i in range(0, n*2, 2):
+			new_coord_list.append((coord_list[i], coord_list[i+1]))
+		return new_coord_list
+
 	def parse(self):
 
 		'''input is expected to have 5 lines
@@ -38,12 +46,15 @@ class board:
 					self.sizeH, self.sizeV = int(l_line[0]),int(l_line[1])
 				elif line_number == 2:
 					self.nWallSquares,self.wallCoordinates = int(l_line[0]),self.string_to_int_list(l_line[1: ])
+					self.wallCoordinates = self.group_coordinates(self.nWallSquares,self.wallCoordinates)
 				elif line_number == 3:
 					self.nBoxes,self.boxCoordinates = int(l_line[0]),self.string_to_int_list(l_line[1: ])
+					self.boxCoordinates = self.group_coordinates(self.nBoxes,self.boxCoordinates)
 				elif line_number == 4:
 					self.nstorLocations,self.storCoordinates = int(l_line[0]),self.string_to_int_list(l_line[1: ])
+					self.storCoordinates = self.group_coordinates(self.nstorLocations,self.storCoordinates)
 				elif line_number == 5:
-					self.playerLoc = (int(l_line[0]),int(l_line[1])) #(x,y)
+					self.playerLoc = (int(l_line[0]),int(l_line[1])) #(x,y) tuple
 				line_number += 1
 
 def main():
