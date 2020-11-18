@@ -44,9 +44,11 @@ class board:
 
 				if line_number == 1:
 					self.sizeH, self.sizeV = int(l_line[0]),int(l_line[1])
+					#print(self.sizeH,self.sizeV)
 				elif line_number == 2:
 					self.nWallSquares,self.wallCoordinates = int(l_line[0]),self.string_to_int_list(l_line[1: ])
 					self.wallCoordinates = self.group_coordinates(self.nWallSquares,self.wallCoordinates)
+					#print(self.nWallSquares,self.wallCoordinates)
 				elif line_number == 3:
 					self.nBoxes,self.boxCoordinates = int(l_line[0]),self.string_to_int_list(l_line[1: ])
 					self.boxCoordinates = self.group_coordinates(self.nBoxes,self.boxCoordinates)
@@ -58,7 +60,7 @@ class board:
 				line_number += 1
 
 def main():
-	board_input_file = os.path.join(os.getcwd(), 'input_files', 'sokoban00.txt')
+	board_input_file = os.path.join(os.getcwd(), 'input_files', 'sokoban01.txt')
 	sokoban_board = board(board_input_file)
 	sokoban_board.parse()
 	print(sokoban_board)
