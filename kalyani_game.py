@@ -1,19 +1,18 @@
 import os # will mostly use this to NOT hard code paths
 
 #I think it's a good idea to use an OOP approach for this project
-class board:
-
-	#initialise board variables 
+class Board:
 
 	def __init__(self, board_input_file):
+		#initialise board variables 
 		self.sizeH, self.sizeV, self.nWallSquares, self.wallCoordinates, self.nBoxes, \
 		self.boxCoordinates, self.nstorLocations, self.storCoordinates, self.playerLoc = \
 		None, None, None, None, None, None, None, None, None
 		self.board_input_file, self.board_grid = board_input_file, None
-
-	#parse input file - sokobanXY.txt
+		self.actions = {'u': (-1,0), 'U': (-1,0), 'l': (0,-1), 'L': (0,-1), 'd': (1,0), 'D': (1,0), 'r': (0,1), 'R': (0,1)}
 
 	def __str__(self):
+		#display class variables
 		return 'sizeH: {self.sizeH}, sizeV: {self.sizeV}, nWallSquares: {self.nWallSquares}, wallCoordinates: {self.wallCoordinates}, nBoxes: {self.nBoxes}, boxCooridates: {self.boxCoordinates}, nstorLocations: {self.nstorLocations}, storCoordinates: {self.storCoordinates}, playerLoc: {self.playerLoc}'.format(self = self)
 
 	def string_to_int_list(self, string_list):
@@ -28,7 +27,7 @@ class board:
 			new_coord_list.append((coord_list[i] - 1, coord_list[i+1] - 1))
 		return new_coord_list
 
-	def parse(self):
+	def parse(self): #parse input file - sokobanXY.txt
 
 		'''input is expected to have 5 lines
 		line 1 is the sizeH, sizeV
@@ -65,15 +64,20 @@ class board:
 	remains fixed. The two variables which change according to the input are boxCordinates and playerLoc.
 	'''
 	def box_on_goal(self):
+		#check if any of the boxes are on any of the storage locations
 		flag = [i for i in self.boxCoordinates if i in self.storCoordinates]
 		if len(flag) > 0:
 			return (True, flag)
 		return False
 
 	def sokoban_on_goal(self):
+		#check if Sokoban is on goal
 		if self.playerLoc in self.storCoordinates:
 			return True
 		return False
+
+	def is_goal_state(self):
+		return sorted(self.storCoordinates) == sorted(boxCoordinates)
 
 	def make_board_grid(self):
 		if self.sizeH is None or self.sizeV is None:
@@ -120,12 +124,50 @@ class board:
 				print(self.board_grid[i][j], end = '')
 			print('')
 
+	#TODO: functions: check_legal_move(), update_board_variables()
+	#Should I create a new class for moving the Sokoban?
+	#The lowercase letters “uldr” are used for moves and the uppercase letters “ULDR” for pushes.
+
+	'''this function breaks when the game expects a lowercase input but the input is uppercase and vice-versa'''
+	def is_legal_move(self, action): #same as Jason's implementation of this function
+		x, y = None, None
+		if action.isupper():
+			x, y = self.playerLoc[0] + 2*self.actions[action][0], self.playerLoc[1] + 2*self.actions[action][1]
+		else:
+			x, y = self.playerLoc[0] + 2*self.actions[action][0], self.playerLoc[1] + 2*self.actions[action][1]
+		print(x,y)
+		return (x,y) not in self.boxCoordinates + self.wallCoordinates or x>self.sizeV or x<0 or y>self.sizeH or y<0
+
+	#if move is legal then update board
+	def update_board(self, action): #also the same as Jason's implementation
+
+		print(self.is_legal_move(action), '?IS LEGAL?')
+		if self.is_legal_move(action): 
+			#print(self.playerLoc, 'OLD PLAYER LOCATION')
+			(x,y) = (self.playerLoc[0]+self.actions[action][0], self.playerLoc[1]+self.actions[action][1])
+			#print(self.playerLoc, 'NEW PLAYER LOCATION')
+			if action.isupper():
+				#print(self.boxCoordinates)
+				self.boxCoordinates.remove((x,y))
+				self.boxCoordinates.append((self.playerLoc[0]+2*self.actions[action][0], self.playerLoc[1]+2*self.actions[action][1]))
+			self.playerLoc = (x, y)
+			return True
+		return False
+
 def main():
 	board_input_file = os.path.join(os.getcwd(), 'input_files', 'sokoban00.txt')
-	sokoban_board = board(board_input_file)
+	sokoban_board = Board(board_input_file)
 	sokoban_board.parse()
 	sokoban_board.make_board_grid()
 	sokoban_board.display_board()
-	print(sokoban_board)
+	print('-'*20)
+	if sokoban_board.update_board('u'):
+		sokoban_board.make_board_grid()
+		sokoban_board.display_board()
+	print('-'*20)
+	#multiple moves not working
+	if sokoban_board.update_board('d'):
+		sokoban_board.make_board_grid()
+		sokoban_board.display_board()
 
 main()
