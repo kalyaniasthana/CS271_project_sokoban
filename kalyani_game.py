@@ -9,7 +9,7 @@ class board:
 		self.sizeH, self.sizeV, self.nWallSquares, self.wallCoordinates, self.nBoxes, \
 		self.boxCoordinates, self.nstorLocations, self.storCoordinates, self.playerLoc = \
 		None, None, None, None, None, None, None, None, None
-		self.board_input_file = board_input_file
+		self.board_input_file, self.board_grid = board_input_file, None
 
 	#parse input file - sokobanXY.txt
 
@@ -24,7 +24,8 @@ class board:
 		The initial position of sokoban is also a tuple (x,y)'''
 		new_coord_list = []
 		for i in range(0, n*2, 2):
-			new_coord_list.append((coord_list[i], coord_list[i+1]))
+			# -1 to match python array indices
+			new_coord_list.append((coord_list[i] - 1, coord_list[i+1] - 1))
 		return new_coord_list
 
 	def parse(self):
@@ -56,13 +57,75 @@ class board:
 					self.nstorLocations,self.storCoordinates = int(l_line[0]),self.string_to_int_list(l_line[1: ])
 					self.storCoordinates = self.group_coordinates(self.nstorLocations,self.storCoordinates)
 				elif line_number == 5:
-					self.playerLoc = (int(l_line[0]),int(l_line[1])) #(x,y) tuple
+					#-1 to match python array indices
+					self.playerLoc = (int(l_line[0])-1,int(l_line[1])-1) #(x,y) tuple
 				line_number += 1
 
+	'''while game playing, sizeH, sizeV, nWallSquares, wallCoordinates, nBoxes, nstorLocations, storCoordinates
+	remains fixed. The two variables which change according to the input are boxCordinates and playerLoc.
+	'''
+	def box_on_goal(self):
+		flag = [i for i in self.boxCoordinates if i in self.storCoordinates]
+		if len(flag) > 0:
+			return (True, flag)
+		return False
+
+	def sokoban_on_goal(self):
+		if self.playerLoc in self.storCoordinates:
+			return True
+		return False
+
+	def make_board_grid(self):
+		if self.sizeH is None or self.sizeV is None:
+			return 'Error: Game Board in not initialised!'
+		#self.sizeV is the number of lists in self.board_grid and self.sizeH is the size of each list
+		self.board_grid = [[' ' for i in range(self.sizeH)] for j in range(self.sizeV)]
+
+		#check if Sokoban is on goal
+		if self.sokoban_on_goal():
+			self.board_gridboard_grid[self.playerLoc[0]][self.playerLoc[1]] = '+'
+		else:
+			self.board_grid[self.playerLoc[0]][self.playerLoc[1]] = '@'
+
+		for i in range(self.nWallSquares):
+			self.board_grid[self.wallCoordinates[i][0]][self.wallCoordinates[i][1]] = '#'
+
+		for i in range(self.nstorLocations):
+			self.board_grid[self.storCoordinates[i][0]][self.storCoordinates[i][1]] = '.'
+
+		for i in range(self.nBoxes):
+			self.board_grid[self.boxCoordinates[i][0]][self.boxCoordinates[i][1]] = '$'
+
+		#check if any of the boxes are on any of the storage locations
+		result = self.box_on_goal()
+		if result:
+			stored_coordinates = result[1]
+			for i in range(len(stored_coordinates)):
+				self.board_grid[self.boxCoordinates[i][0]][self.boxCoordinates[i][1]] = '*'
+		
+		return self.board_grid
+		
+	def display_board(self):
+		''' 
+		"#" - Wall
+		" " - Free Space
+		"$" - Box
+		"." - Goal Place
+		"*" - Box is placed on a goal
+		"@" - Sokoban
+		"+" - Sokoban on a goal
+		'''
+		for i in range(self.sizeV):
+			for j in range(self.sizeH):
+				print(self.board_grid[i][j], end = '')
+			print('')
+
 def main():
-	board_input_file = os.path.join(os.getcwd(), 'input_files', 'sokoban01.txt')
+	board_input_file = os.path.join(os.getcwd(), 'input_files', 'sokoban00.txt')
 	sokoban_board = board(board_input_file)
 	sokoban_board.parse()
+	sokoban_board.make_board_grid()
+	sokoban_board.display_board()
 	print(sokoban_board)
 
 main()
