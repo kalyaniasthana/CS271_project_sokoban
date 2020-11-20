@@ -77,11 +77,11 @@ class Board:
 		return False
 
 	def is_goal_state(self):
-		return sorted(self.storCoordinates) == sorted(boxCoordinates)
+		return sorted(self.storCoordinates) == sorted(self.boxCoordinates)
 
 	def make_board_grid(self):
 		if self.sizeH is None or self.sizeV is None:
-			return 'Error: Game Board in not initialised!'
+			return False
 		#self.sizeV is the number of lists in self.board_grid and self.sizeH is the size of each list
 		self.board_grid = [[' ' for i in range(self.sizeH)] for j in range(self.sizeV)]
 
@@ -134,9 +134,23 @@ class Board:
 		if action.isupper():
 			x, y = self.playerLoc[0] + 2*self.actions[action][0], self.playerLoc[1] + 2*self.actions[action][1]
 		else:
+			#print('test')
 			x, y = self.playerLoc[0] + 2*self.actions[action][0], self.playerLoc[1] + 2*self.actions[action][1]
-		print(x,y)
-		return (x,y) not in self.boxCoordinates + self.wallCoordinates or x>self.sizeV or x<0 or y>self.sizeH or y<0
+
+		flag = (x,y)
+		print(flag, 'FLAG')
+		#print(self.wallCoordinates)
+		if (flag in self.boxCoordinates) or (flag in self.wallCoordinates):
+			print('1')
+			flag = False
+		if x<0 or x>self.sizeV - 1:
+			print('2')
+			flag = False
+		if y<0 or y>self.sizeH - 1:
+			print('3')
+			flag = False
+		print(flag, 'FLAG')
+		return flag
 
 	#if move is legal then update board
 	def update_board(self, action): #also the same as Jason's implementation
@@ -145,17 +159,19 @@ class Board:
 		if self.is_legal_move(action): 
 			#print(self.playerLoc, 'OLD PLAYER LOCATION')
 			(x,y) = (self.playerLoc[0]+self.actions[action][0], self.playerLoc[1]+self.actions[action][1])
-			#print(self.playerLoc, 'NEW PLAYER LOCATION')
+			#print(self.playerLoc)
+			#print(x,y)
 			if action.isupper():
 				#print(self.boxCoordinates)
 				self.boxCoordinates.remove((x,y))
 				self.boxCoordinates.append((self.playerLoc[0]+2*self.actions[action][0], self.playerLoc[1]+2*self.actions[action][1]))
-			self.playerLoc = (x, y)
+				#print(self.boxCoordinates)
+			self.playerLoc = (x,y)
 			return True
 		return False
 
 def main():
-	board_input_file = os.path.join(os.getcwd(), 'input_files', 'sokoban00.txt')
+	board_input_file = os.path.join(os.getcwd(), 'input_files', 'sokoban01.txt')
 	sokoban_board = Board(board_input_file)
 	sokoban_board.parse()
 	sokoban_board.make_board_grid()
@@ -166,7 +182,7 @@ def main():
 		sokoban_board.display_board()
 	print('-'*20)
 	#multiple moves not working
-	if sokoban_board.update_board('d'):
+	if sokoban_board.update_board('u'):
 		sokoban_board.make_board_grid()
 		sokoban_board.display_board()
 
