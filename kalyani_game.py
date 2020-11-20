@@ -87,7 +87,7 @@ class Board:
 
 		#check if Sokoban is on goal
 		if self.sokoban_on_goal():
-			self.board_gridboard_grid[self.playerLoc[0]][self.playerLoc[1]] = '+'
+			self.board_grid[self.playerLoc[0]][self.playerLoc[1]] = '+'
 		else:
 			self.board_grid[self.playerLoc[0]][self.playerLoc[1]] = '@'
 
@@ -132,10 +132,12 @@ class Board:
 	def is_legal_move(self, action): #same as Jason's implementation of this function
 		x, y = None, None
 		if action.isupper():
+			print('isupper')
 			x, y = self.playerLoc[0] + 2*self.actions[action][0], self.playerLoc[1] + 2*self.actions[action][1]
 		else:
+			print('islower')
 			#print('test')
-			x, y = self.playerLoc[0] + 2*self.actions[action][0], self.playerLoc[1] + 2*self.actions[action][1]
+			x, y = self.playerLoc[0] + self.actions[action][0], self.playerLoc[1] + self.actions[action][1]
 
 		flag = (x,y)
 		print(flag, 'FLAG')
@@ -176,14 +178,21 @@ def main():
 	sokoban_board.parse()
 	sokoban_board.make_board_grid()
 	sokoban_board.display_board()
+	print(sokoban_board)
 	print('-'*20)
-	if sokoban_board.update_board('u'):
-		sokoban_board.make_board_grid()
-		sokoban_board.display_board()
+	sokoban_board.update_board('u')
+	sokoban_board.make_board_grid()
+	sokoban_board.display_board()
+	print(sokoban_board)
 	print('-'*20)
 	#multiple moves not working
-	if sokoban_board.update_board('u'):
-		sokoban_board.make_board_grid()
-		sokoban_board.display_board()
+	sokoban_board.update_board('u')
+	sokoban_board.make_board_grid()
+	sokoban_board.display_board()
+	print(sokoban_board)
+	#sokoban_board.update_board('u')
+	#sokoban_board.make_board_grid()
+	#sokoban_board.display_board()
+	#print(sokoban_board)
 
 main()
