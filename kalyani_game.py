@@ -12,7 +12,7 @@ class Board:
 		self.actions = {'u': (-1,0), 'U': (-1,0), 'l': (0,-1), 'L': (0,-1), 'd': (1,0), 'D': (1,0), 'r': (0,1), 'R': (0,1)}
 
 	def __str__(self):
-		#display class variables
+		'''display class variables'''
 		return 'sizeH: {self.sizeH}, sizeV: {self.sizeV}, nWallSquares: {self.nWallSquares}, wallCoordinates: {self.wallCoordinates}, nBoxes: {self.nBoxes}, boxCooridates: {self.boxCoordinates}, nstorLocations: {self.nstorLocations}, storCoordinates: {self.storCoordinates}, playerLoc: {self.playerLoc}'.format(self = self)
 
 	def string_to_int_list(self, string_list):
@@ -85,12 +85,6 @@ class Board:
 		#self.sizeV is the number of lists in self.board_grid and self.sizeH is the size of each list
 		self.board_grid = [[' ' for i in range(self.sizeH)] for j in range(self.sizeV)]
 
-		#check if Sokoban is on goal
-		if self.sokoban_on_goal():
-			self.board_grid[self.playerLoc[0]][self.playerLoc[1]] = '+'
-		else:
-			self.board_grid[self.playerLoc[0]][self.playerLoc[1]] = '@'
-
 		for i in range(self.nWallSquares):
 			self.board_grid[self.wallCoordinates[i][0]][self.wallCoordinates[i][1]] = '#'
 
@@ -106,6 +100,15 @@ class Board:
 			stored_coordinates = result[1]
 			for i in range(len(stored_coordinates)):
 				self.board_grid[self.boxCoordinates[i][0]][self.boxCoordinates[i][1]] = '*'
+
+		#check if Sokoban is on goal
+
+		if self.sokoban_on_goal():
+			print('sokoban on gloal')
+			self.board_grid[self.playerLoc[0]][self.playerLoc[1]] = '+'
+		else:
+			print('sokoban not on goal')
+			self.board_grid[self.playerLoc[0]][self.playerLoc[1]] = '@'
 		
 		return self.board_grid
 		
@@ -133,26 +136,27 @@ class Board:
 		x, y = None, None
 		if action.isupper():
 			print('isupper')
-			x, y = self.playerLoc[0] + 2*self.actions[action][0], self.playerLoc[1] + 2*self.actions[action][1]
+			x, y = self.playerLoc[0] + 2*self.actions[action][0], self.playerLoc[1] + 2*self.actions[action][1] #look two steps ahead
 		else:
 			print('islower')
 			#print('test')
-			x, y = self.playerLoc[0] + self.actions[action][0], self.playerLoc[1] + self.actions[action][1]
+			x, y = self.playerLoc[0] + self.actions[action][0], self.playerLoc[1] + self.actions[action][1] #look one step ahead
 
-		flag = (x,y)
-		print(flag, 'FLAG')
+		'''If there is not box next to the Sokobon and the input is still uppercase, then we can expect funny behavior from this code'''
+		coord = (x,y)
+		print(coord, 'FLAG**')
 		#print(self.wallCoordinates)
-		if (flag in self.boxCoordinates) or (flag in self.wallCoordinates):
+		if (coord in self.boxCoordinates) or (coord in self.wallCoordinates):
 			print('1')
-			flag = False
+			coord = False
 		if x<0 or x>self.sizeV - 1:
 			print('2')
-			flag = False
+			coord = False
 		if y<0 or y>self.sizeH - 1:
 			print('3')
-			flag = False
-		print(flag, 'FLAG')
-		return flag
+			coord = False
+		print(coord, 'FLAG##')
+		return coord
 
 	#if move is legal then update board
 	def update_board(self, action): #also the same as Jason's implementation
@@ -163,7 +167,7 @@ class Board:
 			(x,y) = (self.playerLoc[0]+self.actions[action][0], self.playerLoc[1]+self.actions[action][1])
 			#print(self.playerLoc)
 			#print(x,y)
-			if action.isupper():
+			if action.isupper() and (x,y) in self.boxCoordinates: 
 				#print(self.boxCoordinates)
 				self.boxCoordinates.remove((x,y))
 				self.boxCoordinates.append((self.playerLoc[0]+2*self.actions[action][0], self.playerLoc[1]+2*self.actions[action][1]))
@@ -180,19 +184,14 @@ def main():
 	sokoban_board.display_board()
 	print(sokoban_board)
 	print('-'*20)
-	sokoban_board.update_board('u')
-	sokoban_board.make_board_grid()
-	sokoban_board.display_board()
-	print(sokoban_board)
-	print('-'*20)
-	#multiple moves not working
-	sokoban_board.update_board('u')
-	sokoban_board.make_board_grid()
-	sokoban_board.display_board()
-	print(sokoban_board)
-	#sokoban_board.update_board('u')
-	#sokoban_board.make_board_grid()
-	#sokoban_board.display_board()
-	#print(sokoban_board)
+	moves = ['u', 'l', 'L', 'L', 'L', 'u', 'u', 'u', 'l', 'u', 'd']
+	for move in moves:
+		if sokoban_board.update_board(move):
+			sokoban_board.make_board_grid()
+			sokoban_board.display_board()
+			print(sokoban_board)
+			print('-'*20)
+		else:
+			print('COULD NOT UPDATE BOARD')
 
 main()
