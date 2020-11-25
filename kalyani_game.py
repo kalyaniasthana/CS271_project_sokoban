@@ -104,10 +104,10 @@ class Board:
 		#check if Sokoban is on goal
 
 		if self.sokoban_on_goal():
-			print('sokoban on gloal')
+			#print('sokoban on gloal')
 			self.board_grid[self.playerLoc[0]][self.playerLoc[1]] = '+'
 		else:
-			print('sokoban not on goal')
+			#print('sokoban not on goal')
 			self.board_grid[self.playerLoc[0]][self.playerLoc[1]] = '@'
 		
 		return self.board_grid
@@ -135,27 +135,27 @@ class Board:
 	def is_legal_move(self, action): #same as Jason's implementation of this function
 		x, y = None, None
 		if action.isupper():
-			print('isupper')
+			#print('isupper')
 			x, y = self.playerLoc[0] + 2*self.actions[action][0], self.playerLoc[1] + 2*self.actions[action][1] #look two steps ahead
 		else:
-			print('islower')
+			#print('islower')
 			#print('test')
 			x, y = self.playerLoc[0] + self.actions[action][0], self.playerLoc[1] + self.actions[action][1] #look one step ahead
 
 		'''If there is not box next to the Sokobon and the input is still uppercase, then we can expect funny behavior from this code'''
 		coord = (x,y)
-		print(coord, 'FLAG**')
+		#print(coord, 'FLAG**')
 		#print(self.wallCoordinates)
 		if (coord in self.boxCoordinates) or (coord in self.wallCoordinates):
-			print('1')
+			#print('1')
 			coord = False
 		if x<0 or x>self.sizeV - 1:
-			print('2')
+			#print('2')
 			coord = False
 		if y<0 or y>self.sizeH - 1:
-			print('3')
+			#print('3')
 			coord = False
-		print(coord, 'FLAG##')
+		#print(coord, 'FLAG##')
 		return coord
 
 	#if move is legal then update board
@@ -176,22 +176,57 @@ class Board:
 			return True
 		return False
 
+	def possible_moves(self):
+		'''
+		directions = {(-1,0): ['u', 'U'], (0,-1): ['l', 'L'], (1,0): ['d', 'D'], (0,1): ['r', 'R']}
+		legal_actions = []
+		for direction in directions:
+			if self.is_legal_move(directions[direction][0]):
+				if (self.playerLoc[0]+direction[0], self.playerLoc[1]+direction[1]) in self.boxCoordinates:
+					legal_actions.append(directions[direction][1])
+				else:
+					legal_actions.append(directions[direction][0])
+			if self.is_legal_move(directions[direction][1]):
+				legal_actions.append(directions[direction][1])
+		return legal_actions
+		'''
+		legal_actions = []
+		for action in self.actions:
+			if self.is_legal_move(action):
+				(x,y) = (self.playerLoc[0]+self.actions[action][0],self.playerLoc[1]+self.actions[action][1])
+				if (x,y) in self.boxCoordinates and action.islower():
+					continue
+				if (x,y) not in self.boxCoordinates and action.isupper():
+					continue
+				legal_actions.append(action)
+		return legal_actions
+
+
 def main():
 	board_input_file = os.path.join(os.getcwd(), 'input_files', 'sokoban01.txt')
 	sokoban_board = Board(board_input_file)
 	sokoban_board.parse()
 	sokoban_board.make_board_grid()
 	sokoban_board.display_board()
-	print(sokoban_board)
+	#print(sokoban_board)
 	print('-'*20)
-	moves = ['u', 'l', 'L', 'L', 'L', 'u', 'u', 'u', 'l', 'u', 'd']
-	for move in moves:
-		if sokoban_board.update_board(move):
-			sokoban_board.make_board_grid()
-			sokoban_board.display_board()
-			print(sokoban_board)
-			print('-'*20)
-		else:
-			print('COULD NOT UPDATE BOARD')
+	print(sokoban_board.possible_moves(), 'POSSIBLE MOVES')
+	
+	moves = ['l', 'u', 'U', 'U', 'U']
+	if moves:
+		for move in moves:
+			if sokoban_board.update_board(move):
+				sokoban_board.make_board_grid()
+				sokoban_board.display_board()
+				#print(sokoban_board)
+				print('-'*20)
+				print(sokoban_board.possible_moves(), 'POSSIBLE MOVES')
+			else:
+				print('COULD NOT UPDATE BOARD')
+			if sokoban_board.is_goal_state():
+				print('GOAL STATE!')
+				break
+			#break
+
 
 main()
