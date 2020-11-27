@@ -219,7 +219,7 @@ def aStarSearch():
     # these are the same as in BFS
     boxes = getBoxes(board)
     player = getPlayer(board)
-    starting = (boxes, player)
+    starting = (player, boxes)
     visited = set()
 
     # implementing frontier and actions as priority queues. Priority is determined by heuristic function
