@@ -3,7 +3,11 @@
 Created on Mon Nov 16 10:06:26 2020
 
 @author: jason
+
+This is now for reference only. Project moved to sokoban_ai.py
 """
+
+
 
 import collections 
 import heapq
@@ -250,5 +254,6 @@ def aStarSearch():
                 # Heuristic = heuristic(newPlayer, newBoxes) waiting for the heuristic function
                 frontier.push(node + [(newPlayer, newBox)], Heuristic + Cost) 
                 actions.push(node_action + [action[-1]], Heuristic + Cost)
+
 
 
