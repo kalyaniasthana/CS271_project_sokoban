@@ -440,14 +440,19 @@ class Game:
 	def corner_deadlock(self):
 		board_grid = self.board.getBoardGrid()
 		h = self.board.getSizeH()
-		v = = self.board.getSizeV()
+		v = self.board.getSizeV()
 		boxCoords = self.board.getBoxCoordinates()
 		for coord in boxCoords:
 			i = coord(1)
 			j = coord(2)
-			if (board_grid[i-1][j] == '#' and board_grid[i][j-1] == '#') or (board_grid[i+1][j] == '#' and board_grid[i][j-1] == '#') or (board_grid[i][j+1] == '#' and board_grid[i-1][j] == '#') or  (board_grid[i][j+1] == '#' and board_grid[i+1][j] == '#')):
+			if (board_grid[i-1][j] == '#' and board_grid[i][j-1] == '#'):
 				return True
-
+			elif (board_grid[i+1][j] == '#' and board_grid[i][j-1] == '#'):
+				return True
+			elif (board_grid[i][j+1] == '#' and board_grid[i-1][j] == '#'):
+				return True
+			elif (board_grid[i][j+1] == '#' and board_grid[i+1][j] == '#'):
+				return True
 		return False
 
 	def pre_corner_deadlock(self):
@@ -459,7 +464,7 @@ class Game:
 		"""
 		board_grid = self.board.getBoardGrid()
 		h = self.board.getSizeH()
-		v = = self.board.getSizeV()
+		v = self.board.getSizeV()
 		boxCoords = self.board.getBoxCoordinates()
 		storLoc = self.board.getStorCoordiantes()
 		for coord in boxCoords:
@@ -480,7 +485,7 @@ class Game:
 	def square_block_deadend(self):
 		board_grid = self.board.getBoardGrid()
 		h = self.board.getSizeH()
-		v = = self.board.getSizeV()
+		v = self.board.getSizeV()
 		for i in range(h-1):
 			for j in range(v-1):
 				if self.square_block_checker(i, j, board_grid):
@@ -491,7 +496,7 @@ class Game:
 			return self.box_block_deadend(i+1, j)
 		elif board_grid[i][j+1] == '$':
 			return self.box_block_deadend(i, j+1)
-		elif board_grid[i-1][j] == '$' and board_grid[i][j-1] == '$':
+		elif board_grid[i-1][j] == '$' and board_grid[i][j-1] == '$':
 			return True
 		return False
 
