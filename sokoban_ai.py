@@ -377,7 +377,7 @@ class Game:
 				break
 			if node[-1] not in visited:
 				visited.add(node[-1])
-				for action in possibleMoves(node[-1][0], node[-1][1]):
+				for action in self.board.possible_moves():
 					newPlayer, newBoxes = updateBoard(node[-1][0], node[-1][1], action)
 					# if deadEndCheck(newBoxes):
 					# have to think about what to check for dead ends
@@ -400,41 +400,52 @@ class Game:
 		return heur
 
 	def playAStar(self, heuristic):
-	    """Implement A* search, modifying from BFS, but with PriorityQueue as data structure for search space"""
-	    # these are the same as in BFS
-	    boxes = self.board.getBoxCoordinates()
-	    player = self.board.getPlayerLoc()
-	    starting = (player, boxes)
-	    visited = set()
+		"""Implement A* search"""
+		def cost(actions): return len([x for x in actions if x.islower()]) # defining cost to be uniformly 1 for non-pushes
+	
+		# these are (almost) the same as in BFS
+		boxes = self.board.getBoxCoordinates()
+		player = self.board.getPlayerLoc()
+		storage = self.board.getStorCoordiantes()
+		starting = (player, boxes)
+		visited = set()
+		
+		# implementing frontier and actions as priority queues. 
+		frontier = PriorityQueue()
+		actions = PriorityQueue()
+		
+		h = Heuristic()
+		heur = h.calculate(storage, boxes) # assuming h.calculate(storage, boxes) returns the heurstic value of current state of the game
+		# Hamza, this is assuming we're using Manhattan heuristic, hence no "manhattan" in the parameter. Also I'm assuming I'm providing "storage" and "boxes" as paramaters
+		# instead of the entire board for calculation. But that of course can be changed, depending on how you define the heuristic class.
+		
+		frontier.push([starting], heur)
+		actions.push([0], heur)
 
-	    # implementing frontier and actions as priority queues. Priority is determined by heuristic function
-	    frontier = PriorityQueue()
-	    # frontier.push([starting], heuristic(player, boxes))
-	    # heuristic(player, boxes) to be filled in by Hamza.
-	    actions = PriorityQueue()
-	    # actions.push([0], heuristic(player, starting[1]))
-	    # also waiting for heuristic(player, starting[1])
+		while frontier:
+			node = frontier.pop()
+			node_action = actions.pop()
+			# check if we are in a goal state, before proceeding to search
+			if self.board.is_goal_state():
+				print(','.join(node_action[1:]).replace(',',''))
+				break
+				
+			if node[-1] not in visited:
+				visited.add(node[-1])
+				Cost = cost(node_action[1:])
+				
+				for action in possibleMoves(node[-1][0], node[-1][1]):
+					self.board.update_board(action)
 
-	    while frontier:
-	        node = frontier.pop()
-	        node_action = actions.pop()
-	        if goalCheck(node[-1][-1]):
-	            print(','.join(node_action[1:]).replace(',',''))
-	            break
-	        if node[-1] not in visited:
-	            visited.add(node[-1])
-	            # Cost = cost(node_action[1:]) #need to define a cost function. Simplest way is to have
-	            # every non-push step have cost 1. Something like
-	            # def cost(actions): return len([x for x in actions if x.islower()])
-	            for action in possibleMoves(node[-1][0], node[-1][1]):
-	                newPlayer, newBoxes = updateBoard(node[-1][0], node[-1][1], action)
-	                # if deadEndCheck(newBoxes):
-	                # have to think about what to check for dead ends
-	                #     continue
-
-	                # Heuristic = heuristic(newPlayer, newBoxes) waiting for the heuristic function
-	                frontier.push(node + [(newPlayer, newBox)], Heuristic + Cost)
-	                actions.push(node_action + [action[-1]], Heuristic + Cost)
+				if self.isDeadEnd():
+					continue
+					
+				newPlayer = self.board.getPlayerLoc()
+				newBoxes = self.board.getBoxCoordinates() # get the new box coordinates here to feed to Heuristic
+				heur = h.calculate(storage, newBoxes)
+				
+				frontier.push(node + [(newPlayer, newBoxes)], Cost + heur) # priority value f(n) = cost-to-current-node + heuristic-of-current-node
+				actions.push(node_action + [action[-1]], Cost + heur)
 
 
 	def corner_deadlock(self):
