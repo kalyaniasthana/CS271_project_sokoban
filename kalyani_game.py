@@ -1,4 +1,15 @@
 import os # will mostly use this to NOT hard code paths
+import collections 
+
+'''
+How do we modify our code to incorporate numpy arrays and scipy sparse matrices into it
+and make it both more space and memory efficient? 
+If we go ahead with this modification, we might have to rewrite more than 60% of this script.
+I really don't mind though. I'm pretty sure we don't need so many class variables. 
+Instead, use a character numpy array. numpy arrays have optimized find functions. 
+I guess SciPy array have similar optimized functions and will save a lot of memory on top of that. 
+The possible approach in my head sounds like a classic memory vs speed tradeoff.
+'''
 
 #I think it's a good idea to use an OOP approach for this project
 class Board:
@@ -201,6 +212,70 @@ class Board:
 				legal_actions.append(action)
 		return legal_actions
 
+	#seems like I suck at inheritance since I've made only one class till now
+'''
+	def BFS(self):
+		return None
+		#input: start state
+		#output: series of actions from start state to goal state
+		player = (self.playerLoc[0], self.playerLoc[1])
+		start_state = (player, self.boxCoordinates) # each state is a tuple with the player's location and the box coordinates
+
+		frontier = [[start_state]]
+		paths = [['']]
+		visited = []
+		#visited.append(start_state)
+
+		while frontier:
+			current_state = frontier.pop(0)
+			current_path = paths.pop(0)
+			if self.is_goal_state():
+				return current_path
+			if current_state[-1] not in visited:
+				visited.append(current_state[-1])
+				for action in self.possible_moves():
+					self.update_board(action)
+					new_player = (self.playerLoc[0], self.playerLoc[1])
+					
+					if self.is_dead_end(): 
+						continue
+					
+					frontier.append(current_state + [(new_player, self.boxCoordinates)])
+					paths.append(current_path + [action[-1]])
+'''   
+
+'''
+	def aStarSearch(self):
+
+		def cost(node_action):
+			return len([x for x in actions if x.islower()])
+
+		#we don't need to get_player and get_boxes since this function can access 'self' for that
+		player = (self.playerLoc[0], self.playerLoc[1])
+		start_state = (player, self.boxCoordinates)
+
+		visited = []
+		frontier = PriorityQueue()
+		actions = PriorityQueue()
+
+		while frontier:
+			node = frontier.pop()
+			node_action = actions.pop()
+			if self.is_goal_state():
+				return ','.join(node_action[1:]).replace(',','')
+			if node[-1] not in visited:
+				visited.append(node[-1])
+				Cost = cost(node_action[1:]) #need to define a cost function. Simplest way is to have
+				# 'actions' should look like the list 'moves' in the main() function
+				for action in self.possible_moves():
+					self.update_board(action)
+					new_player = (self.playerLoc[0], self.playerLoc[1])
+					if self.is_dead_end():
+						continue
+					Heuristic = self.heuristic()
+					frontier.push(node + [(new_player, self.boxCoordinates)], Heuristic + Cost) 
+					actions.push(node_action + [action[-1]], Heuristic + Cost)
+'''        
 
 def main():
 	board_input_file = os.path.join(os.getcwd(), 'input_files', 'sokoban01.txt')
@@ -210,6 +285,7 @@ def main():
 	sokoban_board.display_board()
 	#print(sokoban_board)
 	print('-'*20)
+	'''
 	print(sokoban_board.possible_moves(), 'POSSIBLE MOVES')
 	
 	moves = ['l', 'u', 'U', 'U', 'U']
@@ -227,6 +303,8 @@ def main():
 				print('GOAL STATE!')
 				break
 			#break
+	'''
+	print(sokoban_board.BFS())
 
 
 main()
