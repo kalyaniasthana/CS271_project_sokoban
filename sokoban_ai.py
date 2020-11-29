@@ -362,31 +362,6 @@ class Game:
 					break
 					#break
 
-	def playBFS(self):
-		boxes = self.board.getBoxCoordinates()
-		player = self.board.getPlayerLoc()
-		starting = (player, boxes) # a tuple, left-hand-side is player position, right-hand-side is box coordinates
-		frontier = collections.deque([[starting]]) # creates a search frontier
-		actions = collections.deque([[0]])
-		visited = set()
-		while frontier:
-			node = frontier.popleft()
-			node_action = actions.popleft()
-			if goalCheck(node[-1][-1]):
-				print(','.join(node_action[1:]).replace(',',''))
-				break
-			if node[-1] not in visited:
-				visited.add(node[-1])
-				for action in self.board.possible_moves():
-					newPlayer, newBoxes = updateBoard(node[-1][0], node[-1][1], action)
-					# if deadEndCheck(newBoxes):
-					# have to think about what to check for dead ends
-					#     continue
-					frontier.append(node + [(newPlayer, newBoxes)])
-					actions.append(node_action + [action[-1]])
-
-		print("Success!")
-
 	def manhattan_heuristic(self):
 		heur = Heuristic("manhattan")
 		return heur
@@ -399,7 +374,7 @@ class Game:
 		heur = Heuristic("mongolian")
 		return heur
 
-	def playAStar(self, heuristic):
+	def playAStar(self):
 		"""Implement A* search"""
 		def cost(actions): return len([x for x in actions if x.islower()]) # defining cost to be uniformly 1 for non-pushes
 	
@@ -427,8 +402,7 @@ class Game:
 			node_action = actions.pop()
 			# check if we are in a goal state, before proceeding to search
 			if self.board.is_goal_state():
-				print(','.join(node_action[1:]).replace(',',''))
-				break
+				return(','.join(node_action[1:]).replace(',',''))
 				
 			if node[-1] not in visited:
 				visited.add(node[-1])
@@ -517,7 +491,30 @@ class Game:
 			return True
 		return False
 
+	# def playBFS(self):
+	# 	boxes = self.board.getBoxCoordinates()
+	# 	player = self.board.getPlayerLoc()
+	# 	starting = (player, boxes) # a tuple, left-hand-side is player position, right-hand-side is box coordinates
+	# 	frontier = collections.deque([[starting]]) # creates a search frontier
+	# 	actions = collections.deque([[0]])
+	# 	visited = set()
+	# 	while frontier:
+	# 		node = frontier.popleft()
+	# 		node_action = actions.popleft()
+	# 		if goalCheck(node[-1][-1]):
+	# 			print(','.join(node_action[1:]).replace(',',''))
+	# 			break
+	# 		if node[-1] not in visited:
+	# 			visited.add(node[-1])
+	# 			for action in self.board.possible_moves():
+	# 				newPlayer, newBoxes = updateBoard(node[-1][0], node[-1][1], action)
+	# 				# if deadEndCheck(newBoxes):
+	# 				# have to think about what to check for dead ends
+	# 				#     continue
+	# 				frontier.append(node + [(newPlayer, newBoxes)])
+	# 				actions.append(node_action + [action[-1]])
 
+	# 	print("Success!")
 
 
 
