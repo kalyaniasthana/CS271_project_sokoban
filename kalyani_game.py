@@ -222,7 +222,27 @@ class PriorityQueue:
 
     def pop(self):
         (_, _, item) = heapq.heappop(self.Heap)
-        return item  
+        return item
+
+class Heuristic:
+	def __init__(self):
+		self.name = None
+
+	def set_heuristic(self, name):
+		self.name = name
+
+	def calculate(self, storCoordinates, boxCoordinates):
+		heuristicVal = 0
+		if self.name == "manhattan" or self.name == None:
+			for box in boxCoordinates:
+				for storage in storCoordinates:
+					heuristicVal += (abs(storage[0] - box[0])+abs(storage[1] - box[1])) # WHAT THE HECK DO storage() AND box() RETURN? 
+		elif self.name == "euclidean":
+			for box in boxCoordinates:
+				for storage in storCoordinates:
+					heuristicVal += sqrt((abs(storage[0] - box[0])^2+abs(storage[1] - box[1])^2))
+
+		return heuristicVal
 
 class Game:
 	def __init__(self, board):
@@ -257,12 +277,13 @@ class Game:
 		starting = (player, boxCoordinates)
 		visited = set()
 
-		# implementing frontier and actions as priority queues
 		frontier = PriorityQueue()
 		actions = PriorityQueue()
 
 		H = Heuristic()
 		heuristicVal = H.calculate(storCoordinates, boxCoordinates)
+
+		return heuristicVal
 
 		frontier.push([starting], heuristicVal)
 		actions.push([0], heuristicVal)
@@ -300,6 +321,8 @@ def main():
 	sokobanBoard = Board(boardInputFile)
 	game = Game(sokobanBoard)
 	print('-'*20)
-	game.play_moves(['d', 'd', 'd', 'r', 'r', 'r', 'R', 'R', 'd', 'r', 'U', 'U', 'l', 'u', 'R', 'R', 'R', 'R', 'u', 'r', 'D', 'u'])
+	# game.play_moves(['r', 'r', 'd', 'd', 'd', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'u', 'L',
+	 # 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'u', 'l', 'D', 'D', 'D', 'D', 'r', 'd', 'L'])
+	print(game.play_AStar())
 
 main()
