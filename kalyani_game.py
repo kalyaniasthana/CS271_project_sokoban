@@ -126,11 +126,11 @@ class Board:
 		result = self.box_on_goal()
 		if result:
 			stored_coordinates = result[1]
+			# print(stored_coordinates, '@'*10)
 			for i in range(len(stored_coordinates)):
-				self.boardGrid[self.boxCoordinates[i][0]][self.boxCoordinates[i][1]] = '*'
+				self.boardGrid[stored_coordinates[i][0]][stored_coordinates[i][1]] = '*'
 
 		# check if Sokoban is on goal
-
 		if self.sokoban_on_goal():
 			# print('sokoban on gloal')
 			self.boardGrid[self.playerLoc[0]][self.playerLoc[1]] = '+'
@@ -208,7 +208,21 @@ class Board:
 				if (x,y) not in self.boxCoordinates and action.isupper():
 					continue
 				legal_actions.append(action)
-		return legal_actions  
+		return legal_actions
+
+class PriorityQueue:
+    def  __init__(self):
+        self.Heap = []
+        self.Count = 0
+
+    def push(self, item, priority):
+        entry = (priority, self.Count, item)
+        heapq.heappush(self.Heap, entry)
+        self.Count += 1
+
+    def pop(self):
+        (_, _, item) = heapq.heappop(self.Heap)
+        return item  
 
 class Game:
 	def __init__(self, board):
@@ -233,6 +247,50 @@ class Game:
 					print("REACHED GOAL STATE!")
 					break 
 
+	def play_AStar(self):
+		"""Implement A* search"""
+		def cost(actions): return len([x for x in actions if x.islower()]) # defining cost to be uniformly 1 for non-pushes
+
+		boxCoordinates = self.board.get_box_coordinates()
+		player = self.board.get_player_loc()
+		storCoordinates = self.board.get_stor_coordinates()
+		starting = (player, boxCoordinates)
+		visited = set()
+
+		# implementing frontier and actions as priority queues
+		frontier = PriorityQueue()
+		actions = PriorityQueue()
+
+		H = Heuristic()
+		heuristicVal = H.calculate(storCoordinates, boxCoordinates)
+
+		frontier.push([starting], heuristicVal)
+		actions.push([0], heuristicVal)
+
+		while frontier:
+			node = frontier.pop()
+			nodeAction = actions.pop()
+			# check if we are in a goal state before proceeding
+			if self.board.is_goal_state():
+				return ','.join(nodeAction[1:]).replace(',','')
+
+			if node[-1] not in visited:
+				visited.add(node[-1])
+				Cost = cost(nodeAction[1:])
+
+				for action in possibleMoves(node[-1][0], node[-1][1]):
+					self.board.update_board(action)
+
+				if self.isDeadEnd():
+					continue
+
+				newPlayer = self.board.get_player_loc()
+				newBoxCoordinates = self.board.get_box_coordinates() # get the new box coordinates here to feed to Heuristic
+				heuristicVal = H.calculate(storCoordinates, newBoxCoordinates)
+
+				frontier.push(node + [(newPlayer, newBoxCoordinates)], Cost + heuristicVal) # priority value f(n) = cost-to-current-node + heuristic-of-current-node
+				actions.push(nodeAction + [action[-1]], Cost + heuristicVal)
+
 def main():
 	print("Enter sokoban board file number (example: 01) from input_files folder: ")
 	number = input()
@@ -242,5 +300,6 @@ def main():
 	sokobanBoard = Board(boardInputFile)
 	game = Game(sokobanBoard)
 	print('-'*20)
+	game.play_moves(['d', 'd', 'd', 'r', 'r', 'r', 'R', 'R', 'd', 'r', 'U', 'U', 'l', 'u', 'R', 'R', 'R', 'R', 'u', 'r', 'D', 'u'])
 
 main()
