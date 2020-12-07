@@ -13,22 +13,26 @@ class SokobanInputConverter:
     def parse(self): # parse input file - inputXY.txt to sokobanXY.txt
 
         """Explanation ...."""
+        lineLenMax = float('-Inf')
         assert os.path.isfile(self.boardInputFile)
         with open(self.boardInputFile) as fin:
             countLines = 0
             for line in fin:
                 currentLine = list(line.strip('\n'))
-                if countLines == 0:
-                    self.sizeH = len(currentLine)
-                for c in range(self.sizeH):
+                # print(currentLine)
+                lenCurrLine = len(currentLine)
+                if lenCurrLine > lineLenMax:
+                    lineLenMax = lenCurrLine
+                for c in range(lenCurrLine):
                     currentChar = currentLine[c]
                     self.adder(currentChar, c, countLines)
                 countLines += 1
+        self.sizeH = lineLenMax
         self.sizeV = countLines
         self.writing_on_file()
 
     def adder(self, char, i, j): # converts a square in inputXY depending on its content
-        if char == '@':
+        if char == '@' or char == '+':
             self.playerLoc = (j+1, i+1)
         elif char == '#':
             self.nWallSquares += 1
@@ -38,6 +42,11 @@ class SokobanInputConverter:
             self.boxCoordinates.append((j+1, i+1))
         elif char == '.':
             self.nstorLocations += 1
+            self.storCoordinates.append((j+1, i+1))
+        elif char == '*':
+            self.nBoxes += 1
+            self.nstorLocations += 1
+            self.boxCoordinates.append((j+1, i+1))
             self.storCoordinates.append((j+1, i+1))
 
     def writing_on_file(self):
@@ -61,6 +70,8 @@ class SokobanInputConverter:
                 fout.write(" "+str(storCoord[0])+" "+str(storCoord[1]))
             fout.write("\n") # linebreak
             # Line 5 is the initial position of player
+            # print(self.playerLoc)
+            # return
             fout.write(str(self.playerLoc[0])+" "+str(self.playerLoc[1]))
 
 def main():
