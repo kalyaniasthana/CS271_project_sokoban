@@ -1,3 +1,5 @@
+from copy import deepcopy
+import heapq # min-heap by default
 import os # will mostly use this to NOT hard code paths
 
 class Board:
@@ -198,6 +200,19 @@ class Board:
 			return True
 		return False
 
+	# def pseudo_update_board(self, action):
+		# assert self.is_legal_move(action)
+		# (x, y) = (self.playerLoc[0]+self.actions[action][0], self.playerLoc[1]+self.actions[action][1])
+		# both box and player coordinates change
+		# if action.isupper() and (x,y) in self.boxCoordinates:
+			# newBoxCoordinates = deepcopy(self.boxCoordinates)
+			# newBoxCoordinates.remove((x, y))
+			# newBoxCoordinates.append((self.playerLoc[0]+2*self.actions[action][0], self.playerLoc[1]+2*self.actions[action][1]))
+		# else:
+			# newBoxCoordinates = deepcopy(self.boxCoordinates)
+		# newPlayerCoordinates = deepcopy((x, y))
+		# return newPlayerCoordinates, newBoxCoordinates
+
 	def possible_moves(self):
 		legal_actions = []
 		for action in self.actions:
@@ -216,12 +231,12 @@ class PriorityQueue:
         self.Count = 0
 
     def push(self, item, priority):
-        entry = (priority, self.Count, item)
-        heapq.heappush(self.Heap, entry)
+        entry = (priority, self.Count, item) 
+        heapq.heappush(self.Heap, entry) 
         self.Count += 1
 
     def pop(self):
-        (_, _, item) = heapq.heappop(self.Heap)
+        (_, _, item) = heapq.heappop(self.Heap) # heapq is a minheap so node with lowest priority/(heutistic+cost) will be popped first
         return item
 
 class Heuristic:
@@ -267,50 +282,51 @@ class Game:
 					print("REACHED GOAL STATE!")
 					break 
 
-	def play_AStar(self):
-		"""Implement A* search"""
-		def cost(actions): return len([x for x in actions if x.islower()]) # defining cost to be uniformly 1 for non-pushes
+	def play_BFS(self):
+		# boxCoordinates = self.board.get_box_coordinates()
+		# playerLoc = self.board.get_player_loc()
 
-		boxCoordinates = self.board.get_box_coordinates()
-		player = self.board.get_player_loc()
-		storCoordinates = self.board.get_stor_coordinates()
-		starting = (player, boxCoordinates)
-		visited = set()
+		node = deepcopy(self.board)
+		nodes_generated, nodes_repeated = 1, 0
 
-		frontier = PriorityQueue()
-		actions = PriorityQueue()
+		if node.is_goal_state():
+			return 'BOARD IS ALREADY IN GOAL STATE'
+		if not node.get_stor_coordinates():
+			return 'THERE ARE NO STORAGE LOCATIONS'
 
-		H = Heuristic()
-		heuristicVal = H.calculate(storCoordinates, boxCoordinates)
+		frontier1 = [node]
+		frontier2 = [(node.get_player_loc(), node.get_box_coordinates())]
 
-		return heuristicVal
+		path = [['']]
+		visited = []
 
-		frontier.push([starting], heuristicVal)
-		actions.push([0], heuristicVal)
+		while True:
+			print(nodes_generated, nodes_repeated, len(frontier1), len(frontier2))
+			if not frontier1:
+				return 'SOLUTION NOT FOUND'
+			else:
+				currentNode = frontier1.pop(0)
+				(currentPlayer, currentBoxCoordinates) = frontier2.pop(0)
+				currentAction = path.pop(0)
+				actions = currentNode.possible_moves()
+				visited.append((currentPlayer, currentBoxCoordinates))
 
-		while frontier:
-			node = frontier.pop()
-			nodeAction = actions.pop()
-			# check if we are in a goal state before proceeding
-			if self.board.is_goal_state():
-				return ','.join(nodeAction[1:]).replace(',','')
+				for action in actions:
+					childNode = deepcopy(currentNode)
+					nodes_generated += 1
+					childNode.update_board(action)
+					if (childNode.get_player_loc(), childNode.get_box_coordinates()) not in visited:
+						if childNode.is_goal_state():
+							childNode.make_board_grid()
+							childNode.display_board()
+							return ','.join(currentAction[1:] + [action]).replace(',','')
+							# return None
+						frontier1.append(childNode)
+						frontier2.append((childNode.get_player_loc(), childNode.get_box_coordinates()))
+						path.append(currentAction + [action])
+					else:
+						nodes_repeated += 1
 
-			if node[-1] not in visited:
-				visited.add(node[-1])
-				Cost = cost(nodeAction[1:])
-
-				for action in possibleMoves(node[-1][0], node[-1][1]):
-					self.board.update_board(action)
-
-				if self.isDeadEnd():
-					continue
-
-				newPlayer = self.board.get_player_loc()
-				newBoxCoordinates = self.board.get_box_coordinates() # get the new box coordinates here to feed to Heuristic
-				heuristicVal = H.calculate(storCoordinates, newBoxCoordinates)
-
-				frontier.push(node + [(newPlayer, newBoxCoordinates)], Cost + heuristicVal) # priority value f(n) = cost-to-current-node + heuristic-of-current-node
-				actions.push(nodeAction + [action[-1]], Cost + heuristicVal)
 
 def main():
 	print("Enter sokoban board file number (example: 01) from input_files folder: ")
@@ -323,6 +339,10 @@ def main():
 	print('-'*20)
 	# game.play_moves(['r', 'r', 'd', 'd', 'd', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'u', 'L',
 	 # 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'u', 'l', 'D', 'D', 'D', 'D', 'r', 'd', 'L'])
-	print(game.play_AStar())
+	print(game.play_BFS())
+	# moves = list('rDlddrrruuLLrrddllUdrruulullDRddl')
+	# print(len(moves))
+	# game.play_moves(moves)
+
 
 main()
