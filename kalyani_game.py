@@ -1,6 +1,7 @@
 from copy import deepcopy
 import heapq # min-heap by default
 import os # will mostly use this to NOT hard code paths
+from time import time
 
 class Board:
 
@@ -283,49 +284,62 @@ class Game:
 					break 
 
 	def play_BFS(self):
-		# boxCoordinates = self.board.get_box_coordinates()
-		# playerLoc = self.board.get_player_loc()
 
-		node = deepcopy(self.board)
-		nodes_generated, nodes_repeated = 1, 0
+		start = time()
 
-		if node.is_goal_state():
-			return 'BOARD IS ALREADY IN GOAL STATE'
-		if not node.get_stor_coordinates():
-			return 'THERE ARE NO STORAGE LOCATIONS'
+		rootNode = deepcopy(self.board)
+		generatedNodes, repeatedNodes = 1, 0
 
-		frontier1 = [node]
-		frontier2 = [(node.get_player_loc(), node.get_box_coordinates())]
+		if not rootNode.get_stor_coordinates():
+			end = time()
+			return 'THERE ARE NO STORAGE LOCATIONS!', (end - start)
+		if not rootNode.get_box_coordinates():
+			end = time()
+			return 'THERE ARE NO BOX LOCATIONS!', (end - start)
+		if not rootNode.get_player_loc():
+			end = time()
+			return 'SOKOBAN PLAYER MISSING!', (end - start)
+		if rootNode.is_goal_state():
+			end = time()
+			return 'BOARD IS ALREADY IN GOAL STATE!', (end - start)
 
+		frontier1 = [rootNode]
+		# we need another frontier since with player and box locations since deepcopy() created a new object 
+		# with a new pointer each time 
+		frontier2 = [(rootNode.get_player_loc(), rootNode.get_box_coordinates())] 
 		path = [['']]
 		visited = []
 
 		while True:
-			print(nodes_generated, nodes_repeated, len(frontier1), len(frontier2))
+			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}'.format(
+				generatedNodes, repeatedNodes, len(frontier1)))
 			if not frontier1:
-				return 'SOLUTION NOT FOUND'
-			else:
-				currentNode = frontier1.pop(0)
-				(currentPlayer, currentBoxCoordinates) = frontier2.pop(0)
-				currentAction = path.pop(0)
-				actions = currentNode.possible_moves()
-				visited.append((currentPlayer, currentBoxCoordinates))
+				end = time()
+				return 'SOLUTION NOT FOUND', (end - start)
 
-				for action in actions:
-					childNode = deepcopy(currentNode)
-					nodes_generated += 1
-					childNode.update_board(action)
-					if (childNode.get_player_loc(), childNode.get_box_coordinates()) not in visited:
-						if childNode.is_goal_state():
-							childNode.make_board_grid()
-							childNode.display_board()
-							return ','.join(currentAction[1:] + [action]).replace(',','')
-							# return None
-						frontier1.append(childNode)
-						frontier2.append((childNode.get_player_loc(), childNode.get_box_coordinates()))
-						path.append(currentAction + [action])
-					else:
-						nodes_repeated += 1
+			currentNode = frontier1.pop(0)
+			(currentPlayer, currentBoxCoordinates) = frontier2.pop(0)
+			currentMove = path.pop(0)
+
+			possibleMoves = currentNode.possible_moves()
+			visited.append((currentPlayer, currentBoxCoordinates))
+
+			for move in possibleMoves:
+				childNode = deepcopy(currentNode)
+				generatedNodes += 1
+				childNode.update_board(move)
+				if (childNode.get_player_loc(), childNode.get_box_coordinates()) not in visited:
+					if childNode.is_goal_state():
+						childNode.make_board_grid()
+						childNode.display_board()
+						end = time()
+						return 'SOLUTION FOUND!', ','.join(currentMove[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
+						# return None
+					frontier1.append(childNode)
+					frontier2.append((childNode.get_player_loc(), childNode.get_box_coordinates()))
+					path.append(currentMove + [move])
+				else:
+					repeatedNodes += 1
 
 
 def main():
