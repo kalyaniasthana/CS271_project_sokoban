@@ -1,4 +1,7 @@
+from copy import deepcopy
+import heapq # min-heap by default
 import os # will mostly use this to NOT hard code paths
+from time import time
 
 class Board:
 
@@ -18,7 +21,7 @@ class Board:
 		return self.sizeH
 
 	def get_sizeV(self):
-		return self.SizeV
+		return self.sizeV
 
 	def get_nWall_squares(self):
 		return self.nWallSquares
@@ -126,11 +129,11 @@ class Board:
 		result = self.box_on_goal()
 		if result:
 			stored_coordinates = result[1]
+			# print(stored_coordinates, '@'*10)
 			for i in range(len(stored_coordinates)):
-				self.boardGrid[self.boxCoordinates[i][0]][self.boxCoordinates[i][1]] = '*'
+				self.boardGrid[stored_coordinates[i][0]][stored_coordinates[i][1]] = '*'
 
 		# check if Sokoban is on goal
-
 		if self.sokoban_on_goal():
 			# print('sokoban on gloal')
 			self.boardGrid[self.playerLoc[0]][self.playerLoc[1]] = '+'
@@ -170,7 +173,7 @@ class Board:
 		# print(coord, 'FLAG**')
 		# print(self.wallCoordinates)
 		if (coord in self.boxCoordinates) or (coord in self.wallCoordinates):
-			#print('1')
+			# print('1')
 			coord = False
 		if x<0 or x>self.sizeV - 1:
 			# print('2')
@@ -198,6 +201,19 @@ class Board:
 			return True
 		return False
 
+	# def pseudo_update_board(self, action):
+		# assert self.is_legal_move(action)
+		# (x, y) = (self.playerLoc[0]+self.actions[action][0], self.playerLoc[1]+self.actions[action][1])
+		# both box and player coordinates change
+		# if action.isupper() and (x,y) in self.boxCoordinates:
+			# newBoxCoordinates = deepcopy(self.boxCoordinates)
+			# newBoxCoordinates.remove((x, y))
+			# newBoxCoordinates.append((self.playerLoc[0]+2*self.actions[action][0], self.playerLoc[1]+2*self.actions[action][1]))
+		# else:
+			# newBoxCoordinates = deepcopy(self.boxCoordinates)
+		# newPlayerCoordinates = deepcopy((x, y))
+		# return newPlayerCoordinates, newBoxCoordinates
+
 	def possible_moves(self):
 		legal_actions = []
 		for action in self.actions:
@@ -216,12 +232,12 @@ class PriorityQueue:
         self.Count = 0
 
     def push(self, item, priority):
-        entry = (priority, self.Count, item)
-        heapq.heappush(self.Heap, entry)
+        entry = (priority, self.Count, item) 
+        heapq.heappush(self.Heap, entry) 
         self.Count += 1
 
     def pop(self):
-        (_, _, item) = heapq.heappop(self.Heap)
+        (_, _, item) = heapq.heappop(self.Heap) # heapq is a minheap so node with lowest priority/(heutistic+cost) will be popped first
         return item
 
 class Heuristic:
@@ -236,93 +252,178 @@ class Heuristic:
 		if self.name == "manhattan" or self.name == None:
 			for box in boxCoordinates:
 				for storage in storCoordinates:
-					heuristicVal += (abs(storage(1) - box(1))+abs(storage(2) - box(2))) # WHAT DO storage() AND box() RETURN? 
+					heuristicVal += (abs(storage[0] - box[0])+abs(storage[1] - box[1])) # WHAT THE HECK DO storage() AND box() RETURN? 
 		elif self.name == "euclidean":
 			for box in boxCoordinates:
 				for storage in storCoordinates:
-					heuristicVal += sqrt((abs(storage(1) - box(1))^2+abs(storage(2) - box(2))^2))
+					heuristicVal += sqrt((abs(storage[0] - box[0])^2+abs(storage[1] - box[1])^2))
 
 		return heuristicVal
 
 class Game:
 	def __init__(self, board):
 		self.board = board
+		assert isinstance(self.board, Board)
 		self.board.parse()
 		self.board.make_board_grid()
 		self.board.display_board()
-		# print(sokoban_board)
-		# print('-'*20)
 
 	def play_moves(self, moves):
-		# moves = ['l', 'u', 'U', 'U', 'U']
-		if moves:
+		if moves: # moves is a list of moves/actions. For example, moves = ['l', 'u', 'U', 'U', 'U']
 			for move in moves:
 				if self.board.update_board(move):
 					self.board.make_board_grid()
 					self.board.display_board()
 					# print(sokoban_board)
 					print('-'*20)
-					print(self.board.possible_moves(), "POSSIBLE MOVES")
+					print(self.board.possible_moves(), "<--POSSIBLE MOVES")
 				else:
-					print("COULD NOT UPDATE BOARD")
+					print("COULD NOT UPDATE BOARD!")
 				if self.board.is_goal_state():
-					print("GOAL STATE!")
-					break
+					print("REACHED GOAL STATE!")
+					break 
+
+	def play_BFS(self):
+		start = time()
+
+		rootNode = deepcopy(self.board)
+		generatedNodes, repeatedNodes = 1, 0
+
+		if not rootNode.get_stor_coordinates():
+			end = time()
+			return 'THERE ARE NO STORAGE LOCATIONS!', (end - start)
+		if not rootNode.get_box_coordinates():
+			end = time()
+			return 'THERE ARE NO BOX LOCATIONS!', (end - start)
+		if not rootNode.get_player_loc():
+			end = time()
+			return 'SOKOBAN PLAYER MISSING!', (end - start)
+		if rootNode.is_goal_state():
+			end = time()
+			return 'BOARD IS ALREADY IN GOAL STATE!', (end - start)
+
+		frontier1 = [rootNode]
+		# we need another frontier since with player and box locations since deepcopy() created a new object 
+		# with a new pointer each time 
+		frontier2 = [(rootNode.get_player_loc(), rootNode.get_box_coordinates())] 
+		path = [['']]
+		visited = []
+
+		deadlockConditions = 0
+
+		while True:
+			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
+				generatedNodes, repeatedNodes, len(frontier1), deadlockConditions))
+			if not frontier1:
+				end = time()
+				return 'SOLUTION NOT FOUND', (end - start)
+
+			currentNode = frontier1.pop(0)
+			(currentPlayer, currentBoxCoordinates) = frontier2.pop(0)
+			currentMove = path.pop(0)
+
+			possibleMoves = currentNode.possible_moves()
+			visited.append((currentPlayer, currentBoxCoordinates))
+
+			for move in possibleMoves:
+				childNode = deepcopy(currentNode)
+				generatedNodes += 1
+				childNode.update_board(move)
+				if (childNode.get_player_loc(), childNode.get_box_coordinates()) not in visited:
+					if childNode.is_goal_state():
+						childNode.make_board_grid()
+						childNode.display_board()
+						end = time()
+						return 'SOLUTION FOUND!', ','.join(currentMove[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
+						# return None
+					if self.is_deadlock(childNode):
+						print('DEADLOCK CONDITION')
+						deadlockConditions += 1
+						continue
+					frontier1.append(childNode)
+					frontier2.append((childNode.get_player_loc(), childNode.get_box_coordinates()))
+					path.append(currentMove + [move])
+				else:
+					repeatedNodes += 1
 
 	def play_AStar(self):
-		"""Implement A* search"""
-		def cost(actions): return len([x for x in actions if x.islower()]) # defining cost to be uniformly 1 for non-pushes
+		start = time()
 
-		# these are (almost) the same as in BFS
-		boxCoordinates = self.board.get_box_coordinates()
-		player = self.board.get_player_loc()
-		storCoordinates = self.board.get_stor_coordinates()
-		starting = (player, boxCoordinates)
-		visited = set()
+		rootNode = deepcopy(self.board)
+		generatedNodes, repeatedNodes = 1, 0
 
-		# implementing frontier and actions as priority queues
-		frontier = PriorityQueue()
-		actions = PriorityQueue()
+		if not rootNode.get_stor_coordinates():
+			end = time()
+			return 'THERE ARE NO STORAGE LOCATIONS!', (end - start)
+		if not rootNode.get_box_coordinates():
+			end = time()
+			return 'THERE ARE NO BOX LOCATIONS!', (end - start)
+		if not rootNode.get_player_loc():
+			end = time()
+			return 'SOKOBAN PLAYER MISSING!', (end - start)
+		if rootNode.is_goal_state():
+			end = time()
+			return 'BOARD IS ALREADY IN GOAL STATE!', (end - start)
 
 		H = Heuristic()
-		heuristicVal = H.calculate(storCoordinates, boxCoordinates)
+		heuristicVal = H.calculate(rootNode.get_stor_coordinates(), rootNode.get_box_coordinates())
 
-		frontier.push([starting], heuristicVal)
-		actions.push([0], heuristicVal)
+		frontier1 = PriorityQueue()
+		frontier2 = PriorityQueue()
+		path = PriorityQueue()
 
-		while frontier:
-			node = frontier.pop()
-			nodeAction = actions.pop()
-			# check if we are in a goal state, before proceeding to search
-			if self.board.is_goal_state():
-				return(','.join(nodeAction[1:]).replace(',',''))
+		frontier1.push(rootNode, heuristicVal)
+		frontier2.push((rootNode.get_player_loc(), rootNode.get_box_coordinates()), heuristicVal)
+		path.push([''], heuristicVal)
+		visited = []
 
-			if node[-1] not in visited:
-				visited.add(node[-1])
-				Cost = cost(nodeAction[1:])
+		deadlockConditions = 0
 
-				for action in possibleMoves(node[-1][0], node[-1][1]):
-					self.board.update_board(action)
+		while True:
+			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
+				generatedNodes, repeatedNodes, len(frontier1.Heap), deadlockConditions))
+			if not frontier1.Heap:
+				end = time()
+				return 'SOLUTION NOT FOUND', (end - start)
 
-				if self.isDeadEnd():
-					continue
+			currentNode = frontier1.pop()
+			(currentPlayer, currentBoxCoordinates) = frontier2.pop()
+			currentMove = path.pop()
 
-				newPlayer = self.board.get_player_loc()
-				newBoxCoordinates = self.board.get_box_coordinates() # get the new box coordinates here to feed to Heuristic
-				heuristicVal = H.calculate(storCoordinates, newBoxCoordinates)
+			possibleMoves = currentNode.possible_moves()
+			visited.append((currentPlayer, currentBoxCoordinates))
 
-				frontier.push(node + [(newPlayer, newBoxCoordinates)], Cost + heuristicVal) # priority value f(n) = cost-to-current-node + heuristic-of-current-node
-				actions.push(nodeAction + [action[-1]], Cost + heuristicVal)
+			for move in possibleMoves:
+				childNode = deepcopy(currentNode)
+				generatedNodes += 1
+				childNode.update_board(move)
+				if (childNode.get_player_loc(), childNode.get_box_coordinates()) not in visited:
+					if childNode.is_goal_state():
+						childNode.make_board_grid()
+						childNode.display_board()
+						end = time()
+						return 'SOLUTION FOUND!', ','.join(currentMove[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
+						# return None
+					if self.is_deadlock(childNode):
+						print('DEADLOCK CONDITION')
+						deadlockConditions += 1
+						continue
 
+					heuristicVal = H.calculate(childNode.get_stor_coordinates(), childNode.get_box_coordinates())
+					frontier1.push(childNode, heuristicVal)
+					frontier2.push((childNode.get_player_loc(), childNode.get_box_coordinates()), heuristicVal)
+					path.push(currentMove + [move], heuristicVal)
+				else:
+					repeatedNodes += 1
 
-	def corner_deadlock(self):
-		boardGrid = self.board.get_board_grid()
-		h = self.board.get_sizeH()
-		v = self.board.get_sizeV()
-		boxes = self.board.get_box_coordinates()
-		for coord in boxes:
-			i = coord(1)
-			j = coord(2)
+	def corner_deadlock(self, boardObject):
+		boardObject.make_board_grid()
+		boardGrid = boardObject.get_board_grid()
+		h = boardObject.get_sizeH()
+		v = boardObject.get_sizeV()
+		boxCoordinates = boardObject.get_box_coordinates()
+		for coord in boxCoordinates:
+			(i, j) = (coord[0], coord[1])
 			if (boardGrid[i-1][j] == '#' and boardGrid[i][j-1] == '#'):
 				return True
 			elif (boardGrid[i+1][j] == '#' and boardGrid[i][j-1] == '#'):
@@ -333,121 +434,74 @@ class Game:
 				return True
 		return False
 
-	def pre_corner_deadlock(self):
+	def pre_corner_deadlock(self, boardObject):
 		"""It's one of these cases (same vertically):
 
 			#      $                #     ##################...###
 			 ##################...###     #          $           #
 			 And there is no goal on the axis
 		"""
-		boardGrid = self.board.get_board_grid()
-		h = self.board.get_sizeH()
-		v = self.board.get_sizeV()
-		boxes = self.board.get_box_coordinates()
-		storages = self.board.get_stor_coordinates()
-		for coord in boxes:
-			i = coord(1)
-			j = coord(2)
-			if j == 1 or j == (h-2):
-				for store in storages:
-					if store(2) == 1 or store(2) == (v-2):
-						if store(1) >= 1 or store(1) <= (h-2):
+		boardObject.make_board_grid()
+		boardGrid = boardObject.get_board_grid()
+		h = boardObject.get_sizeH()
+		v = boardObject.get_sizeV()
+		boxCoordinates = boardObject.get_box_coordinates()
+		storCoordinates = boardObject.get_stor_coordinates()
+		for coord in boxCoordinates:
+			(i, j) = (coord[0], coord[1])
+			if j == 0 or j == (h-1):
+				for store in storCoordinates:
+					if store[1] == 0 or store[1] == (v-1):
+						if store[0] >= 0 or store[0] <= (h-1):
 							return False
-					else:
-						# It means that there is no store location but there is a box
 						return True
-			elif i == 1 or i == (v-2):
-				for store in storages:
-					if store(1) == 1 or store(1) == (h-2):
-						if store(2) >= 1 or store(2) <= (v-2):
+
+			elif i == 0 or i == (v-1):
+				for store in storCoordinates:
+					if store[0] == 0 or store[0] == (h-1):
+						if store[1] >= 0 or store[1] <= (v-1):
 							return False
-					else:
-						# It means that there is no store location but there is a box
 						return True
 		return False
 
-	def square_block_deadend(self):
-		boardGrid = self.board.get_board_grid()
-		h = self.board.get_sizeH()
-		v = self.board.get_sizeV()
-		for i in range(h-1):
-			for j in range(v-1):
-				if self.square_block_checker(i, j, boardGrid):
-					return True
-
-	def square_block_checker(self, i, j, boardGrid):
-		if boardGrid[i+1][j] == '$':
-			return self.box_block_deadend(i+1, j)
-		elif boardGrid[i][j+1] == '$':
-			return self.box_block_deadend(i, j+1)
-		elif boardGrid[i-1][j] == '$' and boardGrid[i][j-1] == '$':
-			return True
+	def square_block_deadlock(self, boardObject):
+		boardObject.make_board_grid()
+		boardGrid = boardObject.get_board_grid()
+		h = boardObject.get_sizeH()
+		v = boardObject.get_sizeV()
+		for i in range(v-1):
+			for j in range(h-1):
+				if boardGrid[i][j] == '$':
+					if boardGrid[i+1][j] == '$' and boardGrid[i][j+1] == '$' and boardGrid[i+1][j+1] == '$':
+						return True
+					if boardGrid[i][j-1] == '$' and boardGrid[i+1][j] == '$' and boardGrid[i+1][j-1] == '$':
+						return True
+					if boardGrid[i-1][j] == '$' and boardGrid[i][j-1] == '$' and boardGrid[i-1][j-1] == '$':
+						return True
+					if boardGrid[i-1][j] == '$' and boardGrid[i-1][j+1] == '$' and boardGrid[i][j+1] == '$':
+						return True
 		return False
 
-
-	def isDeadEnd(self):
-		if self.simple_deadlock() or self.pre_corner_deadlock() or self.square_block_deadend() :
+	def is_deadlock(self, boardObject):
+		if self.corner_deadlock(boardObject) or self.pre_corner_deadlock(boardObject) or self.square_block_deadlock(boardObject):
 			return True
 		return False
-
-	# def playBFS(self):
-	# 	boxes = self.board.get_box_coordinates()
-	# 	player = self.board.get_player_loc()
-	# 	starting = (player, boxes) # a tuple, left-hand-side is player position, right-hand-side is box coordinates
-	# 	frontier = collections.deque([[starting]]) # creates a search frontier
-	# 	actions = collections.deque([[0]])
-	# 	visited = set()
-	# 	while frontier:
-	# 		node = frontier.popleft()
-	# 		node_action = actions.popleft()
-	# 		if goalCheck(node[-1][-1]):
-	# 			print(','.join(node_action[1:]).replace(',',''))
-	# 			break
-	# 		if node[-1] not in visited:
-	# 			visited.add(node[-1])
-	# 			for action in self.board.possible_moves():
-	# 				newPlayer, newBoxes = updateBoard(node[-1][0], node[-1][1], action)
-	# 				# if deadEndCheck(newBoxes):
-	# 				# have to think about what to check for dead ends
-	# 				#     continue
-	# 				frontier.append(node + [(newPlayer, newBoxes)])
-	# 				actions.append(node_action + [action[-1]])
-
-	# 	print("Success!")
-
-
 
 def main():
-	print("Introduce sokoban file number (example: 01) in input_files folder:")
+	print("Enter sokoban board file number (example: 01) from input_files folder: ")
 	number = input()
+	print('-'*20)
 	boardInputFile = os.path.join(os.getcwd(), 'input_files', 'sokoban'+str(number)+'.txt')
-	board = Board(boardInputFile)
-	game = 	Game(board)
-	print("Introduce the Agent you want to try:\n[1] No Agent\n[2] BFS\n[3] A* Star Search")
-	number = int(input())
-
-	if number == 1:
-		print("case 1")
-		game.play()
-	elif number == 2:
-		game.playBFS()
-	elif number == 3:
-		print("Introduce the Heuristic you want to try:\n[1] Manhattan Distance\n[2] Euclidean Distance\n[3] Mongolian Algorithm")
-		number2 = int(input())
-		if number2 == 1:
-			heuristic = game.manhattan_heuristic()
-			game.play_AStar(heuristic)
-		elif number2 == 2:
-			heuristic = game.euclidean_heuristic()
-			game.play_AStar(heuristic)
-		elif number2 == 3:
-			heuristic = game.mongolian_heuristic()
-			game.play_AStar(heuristic)
-		else:
-			print("Wrong heuristic")
-	else:
-		print("Wrong number")
-
+	assert os.path.isfile(boardInputFile)
+	sokobanBoard = Board(boardInputFile)
+	game = Game(sokobanBoard)
+	print('-'*20)
+	# game.play_moves(['r', 'r', 'd', 'd', 'd', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'u', 'L',
+	 # 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'u', 'l', 'D', 'D', 'D', 'D', 'r', 'd', 'L'])
+	print(game.play_AStar())
+	# moves = list('rDlddrrruuLLrrddllUdrruulullDRddl')
+	# print(len(moves))
+	# game.play_moves(moves)
 
 
 main()
