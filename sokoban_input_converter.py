@@ -81,4 +81,5 @@ def main():
     sokobanBoard = SokobanInputConverter(boardInputFile, strFileNumber)
     sokobanBoard.parse()
 
-main()
+if __name__ == '__main__':
+    main()
