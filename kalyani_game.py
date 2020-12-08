@@ -21,7 +21,7 @@ class Board:
 		return self.sizeH
 
 	def get_sizeV(self):
-		return self.SizeV
+		return self.sizeV
 
 	def get_nWall_squares(self):
 		return self.nWallSquares
@@ -284,7 +284,6 @@ class Game:
 					break 
 
 	def play_BFS(self):
-
 		start = time()
 
 		rootNode = deepcopy(self.board)
@@ -310,9 +309,11 @@ class Game:
 		path = [['']]
 		visited = []
 
+		deadlockConditions = 0
+
 		while True:
-			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}'.format(
-				generatedNodes, repeatedNodes, len(frontier1)))
+			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
+				generatedNodes, repeatedNodes, len(frontier1), deadlockConditions))
 			if not frontier1:
 				end = time()
 				return 'SOLUTION NOT FOUND', (end - start)
@@ -335,12 +336,86 @@ class Game:
 						end = time()
 						return 'SOLUTION FOUND!', ','.join(currentMove[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
 						# return None
+					if self.is_deadlock(childNode):
+						print('DEADLOCK CONDITION')
+						deadlockConditions += 1
+						continue
 					frontier1.append(childNode)
 					frontier2.append((childNode.get_player_loc(), childNode.get_box_coordinates()))
 					path.append(currentMove + [move])
 				else:
 					repeatedNodes += 1
 
+	def corner_deadlock(self, boardObject):
+		boardObject.make_board_grid()
+		boardGrid = boardObject.get_board_grid()
+		h = boardObject.get_sizeH()
+		v = boardObject.get_sizeV()
+		boxCoordinates = boardObject.get_box_coordinates()
+		for coord in boxCoordinates:
+			(i, j) = (coord[0], coord[1])
+			if (boardGrid[i-1][j] == '#' and boardGrid[i][j-1] == '#'):
+				return True
+			elif (boardGrid[i+1][j] == '#' and boardGrid[i][j-1] == '#'):
+				return True
+			elif (boardGrid[i][j+1] == '#' and boardGrid[i-1][j] == '#'):
+				return True
+			elif (boardGrid[i][j+1] == '#' and boardGrid[i+1][j] == '#'):
+				return True
+		return False
+
+	def pre_corner_deadlock(self, boardObject):
+		"""It's one of these cases (same vertically):
+
+			#      $                #     ##################...###
+			 ##################...###     #          $           #
+			 And there is no goal on the axis
+		"""
+		boardObject.make_board_grid()
+		boardGrid = boardObject.get_board_grid()
+		h = boardObject.get_sizeH()
+		v = boardObject.get_sizeV()
+		boxCoordinates = boardObject.get_box_coordinates()
+		storCoordinates = boardObject.get_stor_coordinates()
+		for coord in boxCoordinates:
+			(i, j) = (coord[0], coord[1])
+			if j == 0 or j == (h-1):
+				for store in storCoordinates:
+					if store[1] == 0 or store[1] == (v-1):
+						if store[0] >= 0 or store[0] <= (h-1):
+							return False
+						return True
+
+			elif i == 0 or i == (v-1):
+				for store in storCoordinates:
+					if store[0] == 0 or store[0] == (h-1):
+						if store[1] >= 0 or store[1] <= (v-1):
+							return False
+						return True
+		return False
+
+	def square_block_deadlock(self, boardObject):
+		boardObject.make_board_grid()
+		boardGrid = boardObject.get_board_grid()
+		h = boardObject.get_sizeH()
+		v = boardObject.get_sizeV()
+		for i in range(v-1):
+			for j in range(h-1):
+				if boardGrid[i][j] == '$':
+					if boardGrid[i+1][j] == '$' and boardGrid[i][j+1] == '$' and boardGrid[i+1][j+1] == '$':
+						return True
+					if boardGrid[i][j-1] == '$' and boardGrid[i+1][j] == '$' and boardGrid[i+1][j-1] == '$':
+						return True
+					if boardGrid[i-1][j] == '$' and boardGrid[i][j-1] == '$' and boardGrid[i-1][j-1] == '$':
+						return True
+					if boardGrid[i-1][j] == '$' and boardGrid[i-1][j+1] == '$' and boardGrid[i][j+1] == '$':
+						return True
+		return False
+
+	def is_deadlock(self, boardObject):
+		if self.corner_deadlock(boardObject) or self.pre_corner_deadlock(boardObject) or self.square_block_deadlock(boardObject):
+			return True
+		return False
 
 def main():
 	print("Enter sokoban board file number (example: 01) from input_files folder: ")
