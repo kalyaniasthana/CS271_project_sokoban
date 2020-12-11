@@ -11,6 +11,7 @@ class Game:
 		self.board.parse()
 		self.board.make_board_grid()
 		self.board.display_board()
+		self.branchingFactor, self.treeDepth = 0, 0
 
 	def play_moves(self, moves):
 		if moves: # moves is a list of moves/actions. For example, moves = ['l', 'u', 'U', 'U', 'U']
@@ -110,6 +111,7 @@ class Game:
 			return 'BOARD IS ALREADY IN GOAL STATE!', (end - start)
 
 		H = Heuristic()
+		# H.set_heuristic("manhattan2")
 		heuristicVal = H.calculate(rootNode.get_stor_coordinates(), rootNode.get_box_coordinates())
 
 		frontier1 = PriorityQueue()
@@ -122,6 +124,13 @@ class Game:
 		visited = []
 
 		deadlockConditions = 0
+
+		# Hamza: This i represents the number of states visited, I think generated Nodes does not apply because
+		# we don't explore possible moves for all of the generated nodes so the branching factor cannot use this value
+		# i, b = 0, 0 # don't really need i since we can just do len(visited) for this
+		b = 0 
+		self.branchingFactor = 0
+		self.treeDepth = 0
 
 		while True:
 			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
@@ -136,6 +145,11 @@ class Game:
 
 			possibleMoves = currentNode.possible_moves()
 			visited.append((currentPlayer, currentBoxCoordinates))
+
+			# Tree depth and branch factor variables
+			b += len(possibleMoves) # branching factor of the current node
+			# i = len(visited) # number of visited nodes
+			self.treeDepth += 1
 
 			for move in possibleMoves:
 				childNode = deepcopy(currentNode)
@@ -161,6 +175,8 @@ class Game:
 					path.push(currentMove + [move], heuristicVal)
 				else:
 					repeatedNodes += 1
+
+		self.branchingFactor = b//len(visited) # average branching factor
 
 	def corner_deadlock(self, boardObject):
 		boardObject.make_board_grid()
