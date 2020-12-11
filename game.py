@@ -1,6 +1,7 @@
 from board import Board
 from copy import deepcopy
 from heuristic import Heuristic
+from math import ceil
 from priority_queue import PriorityQueue
 from time import time
 
@@ -160,6 +161,7 @@ class Game:
 						childNode.make_board_grid()
 						childNode.display_board()
 						end = time()
+						self.branchingFactor = ceil(b/len(visited))# average branching factor
 						return 'SOLUTION FOUND!', ','.join(currentMove[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
 						# return None
 					if self.is_deadlock(childNode):
@@ -174,9 +176,7 @@ class Game:
 					frontier2.push((childNode.get_player_loc(), childNode.get_box_coordinates()), heuristicVal)
 					path.push(currentMove + [move], heuristicVal)
 				else:
-					repeatedNodes += 1
-
-		self.branchingFactor = b//len(visited) # average branching factor
+					repeatedNodes += 1		
 
 	def corner_deadlock(self, boardObject):
 		boardObject.make_board_grid()
