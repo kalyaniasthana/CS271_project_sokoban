@@ -11,6 +11,8 @@ class Game:
 		self.board.parse()
 		self.board.make_board_grid()
 		self.board.display_board()
+		self.branch_factor = 0
+		self.tree_depth = 0
 
 	def play_moves(self, moves):
 		if moves: # moves is a list of moves/actions. For example, moves = ['l', 'u', 'U', 'U', 'U']
@@ -25,11 +27,10 @@ class Game:
 					print("COULD NOT UPDATE BOARD!")
 				if self.board.is_goal_state():
 					print("REACHED GOAL STATE!")
-					break 
+					break
 
 	def play_BFS(self):
 		start = time()
-
 		rootNode = deepcopy(self.board)
 		generatedNodes, repeatedNodes = 1, 0
 
@@ -47,13 +48,19 @@ class Game:
 			return 'BOARD IS ALREADY IN GOAL STATE!', (end - start)
 
 		frontier1 = [rootNode]
-		# we need another frontier since with player and box locations since deepcopy() created a new object 
-		# with a new pointer each time 
-		frontier2 = [(rootNode.get_player_loc(), rootNode.get_box_coordinates())] 
+		# we need another frontier since with player and box locations since deepcopy() created a new object
+		# with a new pointer each time
+		frontier2 = [(rootNode.get_player_loc(), rootNode.get_box_coordinates())]
 		path = [['']]
 		visited = []
 
 		deadlockConditions = 0
+
+		# Hamza: This i represents the number of states visited, I think generated Nodes does not apply because
+		# we don't explore possible moves for all of the generated nodes so the branching factor cannot use this value
+		int i, b = 0, 0
+		self.branch_factor = 0
+		self.tree_depth = 0
 
 		while True:
 			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
@@ -69,6 +76,11 @@ class Game:
 			possibleMoves = currentNode.possible_moves()
 			visited.append((currentPlayer, currentBoxCoordinates))
 
+			# Tree depth and branch factor variables
+			b += possibleMoves.length()
+			i += 1
+			self.tree_depth += 1
+			
 			for move in possibleMoves:
 				childNode = deepcopy(currentNode)
 				generatedNodes += 1
@@ -89,6 +101,8 @@ class Game:
 					path.append(currentMove + [move])
 				else:
 					repeatedNodes += 1
+
+		self.branch_factor = b / i
 
 	def play_AStar(self):
 		start = time()
@@ -123,6 +137,12 @@ class Game:
 
 		deadlockConditions = 0
 
+		# Hamza: This i represents the number of states visited where we checked their child nodes, I think generated Nodes
+		# does not apply because don't explore possible moves for all of the generated nodes so the branching factor cannot use this value
+		int i, b = 0, 0
+		self.branch_factor = 0
+		self.tree_depth = 0
+
 		while True:
 			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
 				generatedNodes, repeatedNodes, len(frontier1.Heap), deadlockConditions))
@@ -136,6 +156,11 @@ class Game:
 
 			possibleMoves = currentNode.possible_moves()
 			visited.append((currentPlayer, currentBoxCoordinates))
+
+			# Tree depth and branch factor variables
+			b += possibleMoves.length()
+			i += 1
+			self.tree_depth += 1
 
 			for move in possibleMoves:
 				childNode = deepcopy(currentNode)
@@ -159,6 +184,7 @@ class Game:
 					path.push(currentMove + [move], heuristicVal)
 				else:
 					repeatedNodes += 1
+		self.branch_factor = b / i
 
 	def corner_deadlock(self, boardObject):
 		boardObject.make_board_grid()
