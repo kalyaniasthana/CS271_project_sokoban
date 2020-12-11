@@ -80,7 +80,7 @@ class Game:
 			b += possibleMoves.length()
 			i += 1
 			self.tree_depth += 1
-			
+
 			for move in possibleMoves:
 				childNode = deepcopy(currentNode)
 				generatedNodes += 1
@@ -251,6 +251,45 @@ class Game:
 					if boardGrid[i-1][j] == '$' and boardGrid[i-1][j+1] == '$' and boardGrid[i][j+1] == '$':
 						return True
 		return False
+
+	""" This one looks tricky so I don't know if the implementation is okay.
+		The idea is for every storCoordinates, when you put a box in a goal state, choose the other closest box.
+		The closest one can't go there right? What would happen if the second one
+		should have been the one there instead? We check if the closest can go to another storLoc"""
+	def should_have_been_me_deadlock(self, boardObject):
+		boardObject.make_board_grid()
+		boardGrid = boardObject.get_board_grid()
+		boxCoordinates = boardObject.get_box_coordinates()
+		storCoordinates = boardObject.get_stor_coordinates()
+		boxCoord1 = (0, 0)
+		distCoord1 = 10000
+		for storage in storCoordinates:
+			for box in boxCoordinates:
+				dist = abs(storage[0] - box[0])+abs(storage[1] - box[1])
+				if dist < distCoord1:
+					boxCoord1 = box
+					distCoord1 = dist
+			# Now here we have the closest box to a specific occupied storage
+			# Let's see if this box can go to another storageLocation or not
+			# new_grid = convertBoxesToWalls
+			#
+			# storCoordinates = removeOccupiedStorage...
+			modified_boardObject = boardObject
+			# Now we check if the player can but the other box on another location
+			if not feasible_path(modified_boardObject, storCoordinates, closestBox):
+				return True
+		return False
+
+
+	def feasible_path(self, modified_boardObject, storCoordinates, closestBox):
+		# The idea here is to define a BFS that gets as input the modified Board with only one box and storageLocation
+		# if it cannot find a feasible solution on all those storageLocations
+		for storage in storCoordinates:
+			moves = self.play_BFS_2(modified_boardObject, storage, closestBox)
+			if moves = None:
+				return False
+			else:
+				return True
 
 	def is_deadlock(self, boardObject):
 		if self.corner_deadlock(boardObject) or self.pre_corner_deadlock(boardObject) or self.square_block_deadlock(boardObject):
