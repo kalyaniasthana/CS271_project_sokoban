@@ -154,6 +154,8 @@ class Game:
 						continue
 
 					heuristicVal = H.calculate(childNode.get_stor_coordinates(), childNode.get_box_coordinates())
+					childNode.make_board_grid()
+					childNode.display_board()
 					frontier1.push(childNode, heuristicVal)
 					frontier2.push((childNode.get_player_loc(), childNode.get_box_coordinates()), heuristicVal)
 					path.push(currentMove + [move], heuristicVal)
