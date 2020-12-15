@@ -345,7 +345,6 @@ class Game:
 							right_wall = True
 							right_wall_coord = n+k
 			if left_wall and right_wall:
-				boardObject.display_board()
 				# This means we have this  # (free floor) $ (free floor)#
 				upper_bound = True
 				lower_bound = True
@@ -364,6 +363,9 @@ class Game:
 								# There is a storLocation between the two places so there is no deadlock
 								return False
 					print("WE HAVE A FUCKING UPPER DEADLOOOOCK!!!! ")
+					boardObject.display_board()
+					print(" ")
+					print(" ")
 					return True
 				if lower_bound:
 					# This means we have this  #(free floor)$(free floor)#
