@@ -1,8 +1,12 @@
 from board import Board
 from copy import deepcopy
 from heuristic import Heuristic
+from math import ceil
 from priority_queue import PriorityQueue
 from time import time
+
+FOUND = 999999999
+NOT_FOUND = -999999999
 
 class Game:
 	def __init__(self, board):
@@ -11,8 +15,7 @@ class Game:
 		self.board.parse()
 		self.board.make_board_grid()
 		self.board.display_board()
-		self.branch_factor = 0
-		self.tree_depth = 0
+		self.branchingFactor, self.treeDepth = 0, 0
 
 	def play_moves(self, moves):
 		if moves: # moves is a list of moves/actions. For example, moves = ['l', 'u', 'U', 'U', 'U']
@@ -31,6 +34,7 @@ class Game:
 
 	def play_BFS(self):
 		start = time()
+
 		rootNode = deepcopy(self.board)
 		generatedNodes, repeatedNodes = 1, 0
 
@@ -56,12 +60,6 @@ class Game:
 
 		deadlockConditions = 0
 
-		# Hamza: This i represents the number of states visited, I think generated Nodes does not apply because
-		# we don't explore possible moves for all of the generated nodes so the branching factor cannot use this value
-		int i, b = 0, 0
-		self.branch_factor = 0
-		self.tree_depth = 0
-
 		while True:
 			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
 				generatedNodes, repeatedNodes, len(frontier1), deadlockConditions))
@@ -75,11 +73,6 @@ class Game:
 
 			possibleMoves = currentNode.possible_moves()
 			visited.append((currentPlayer, currentBoxCoordinates))
-
-			# Tree depth and branch factor variables
-			b += possibleMoves.length()
-			i += 1
-			self.tree_depth += 1
 
 			for move in possibleMoves:
 				childNode = deepcopy(currentNode)
@@ -102,8 +95,6 @@ class Game:
 				else:
 					repeatedNodes += 1
 
-		self.branch_factor = b / i
-
 	def play_AStar(self):
 		start = time()
 
@@ -124,6 +115,7 @@ class Game:
 			return 'BOARD IS ALREADY IN GOAL STATE!', (end - start)
 
 		H = Heuristic()
+		# H.set_heuristic("manhattan2")
 		heuristicVal = H.calculate(rootNode.get_stor_coordinates(), rootNode.get_box_coordinates())
 
 		frontier1 = PriorityQueue()
@@ -137,11 +129,12 @@ class Game:
 
 		deadlockConditions = 0
 
-		# Hamza: This i represents the number of states visited where we checked their child nodes, I think generated Nodes
-		# does not apply because don't explore possible moves for all of the generated nodes so the branching factor cannot use this value
-		int i, b = 0, 0
-		self.branch_factor = 0
-		self.tree_depth = 0
+		# Hamza: This i represents the number of states visited, I think generated Nodes does not apply because
+		# we don't explore possible moves for all of the generated nodes so the branching factor cannot use this value
+		# i, b = 0, 0 # don't really need i since we can just do len(visited) for this
+		b = 0
+		self.branchingFactor = 0
+		self.treeDepth = 0
 
 		while True:
 			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
@@ -158,9 +151,9 @@ class Game:
 			visited.append((currentPlayer, currentBoxCoordinates))
 
 			# Tree depth and branch factor variables
-			b += possibleMoves.length()
-			i += 1
-			self.tree_depth += 1
+			b += len(possibleMoves) # branching factor of the current node
+			# i = len(visited) # number of visited nodes
+			self.treeDepth += 1
 
 			for move in possibleMoves:
 				childNode = deepcopy(currentNode)
@@ -171,6 +164,7 @@ class Game:
 						childNode.make_board_grid()
 						childNode.display_board()
 						end = time()
+						self.branchingFactor = ceil(b/len(visited))# average branching factor
 						return 'SOLUTION FOUND!', ','.join(currentMove[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
 						# return None
 					if self.is_deadlock(childNode):
@@ -179,12 +173,107 @@ class Game:
 						continue
 
 					heuristicVal = H.calculate(childNode.get_stor_coordinates(), childNode.get_box_coordinates())
+					childNode.make_board_grid()
+					#childNode.display_board()
 					frontier1.push(childNode, heuristicVal)
 					frontier2.push((childNode.get_player_loc(), childNode.get_box_coordinates()), heuristicVal)
 					path.push(currentMove + [move], heuristicVal)
 				else:
 					repeatedNodes += 1
-		self.branch_factor = b / i
+
+	def play_AStar_fix_f(self):
+		start = time()
+
+		rootNode = deepcopy(self.board)
+		generatedNodes, repeatedNodes = 1, 0
+
+		if not rootNode.get_stor_coordinates():
+			end = time()
+			return 'THERE ARE NO STORAGE LOCATIONS!', (end - start)
+		if not rootNode.get_box_coordinates():
+			end = time()
+			return 'THERE ARE NO BOX LOCATIONS!', (end - start)
+		if not rootNode.get_player_loc():
+			end = time()
+			return 'SOKOBAN PLAYER MISSING!', (end - start)
+		if rootNode.is_goal_state():
+			end = time()
+			return 'BOARD IS ALREADY IN GOAL STATE!', (end - start)
+
+		H = Heuristic()
+		# H.set_heuristic("manhattan2")
+		heuristicVal = H.calculate(rootNode.get_stor_coordinates(), rootNode.get_box_coordinates())
+		g = 0
+		frontier1 = PriorityQueue()
+		frontier2 = PriorityQueue()
+		path = PriorityQueue()
+
+		frontier1.push(rootNode, heuristicVal)
+		frontier2.push((rootNode.get_player_loc(), rootNode.get_box_coordinates()), g + heuristicVal)
+		path.push([''], g + heuristicVal)
+		visited = []
+
+		deadlockConditions = 0
+
+		# Hamza: This i represents the number of states visited, I think generated Nodes does not apply because
+		# we don't explore possible moves for all of the generated nodes so the branching factor cannot use this value
+		# i, b = 0, 0 # don't really need i since we can just do len(visited) for this
+		b = 0
+		self.branchingFactor = 0
+		self.treeDepth = 0
+
+		while True:
+			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
+				generatedNodes, repeatedNodes, len(frontier1.Heap), deadlockConditions))
+			if not frontier1.Heap:
+				end = time()
+				return 'SOLUTION NOT FOUND', (end - start)
+
+			currentNode = frontier1.pop()
+			(currentPlayer, currentBoxCoordinates) = frontier2.pop()
+			currentMove = path.pop()
+
+			possibleMoves = currentNode.possible_moves()
+			visited.append((currentPlayer, currentBoxCoordinates))
+
+			# Tree depth and branch factor variables
+			b += len(possibleMoves) # branching factor of the current node
+			# i = len(visited) # number of visited nodes
+			self.treeDepth += 1
+
+			for move in possibleMoves:
+				childNode = deepcopy(currentNode)
+				generatedNodes += 1
+				childNode.update_board(move)
+				if (childNode.get_player_loc(), childNode.get_box_coordinates()) not in visited:
+					if childNode.is_goal_state():
+						childNode.make_board_grid()
+						childNode.display_board()
+						end = time()
+						self.branchingFactor = ceil(b/len(visited))# average branching factor
+						return 'SOLUTION FOUND!', ','.join(currentMove[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
+						# return None
+					if self.is_deadlock(childNode):
+						print('DEADLOCK CONDITION')
+						deadlockConditions += 1
+						continue
+					heuristicVal = H.calculate(childNode.get_stor_coordinates(), childNode.get_box_coordinates())
+					childNode.make_board_grid()
+					childNode.display_board()
+					g = len(currentMove)
+					g2 = self.compute_cost(currentMove)
+					frontier1.push(childNode, heuristicVal + g2 + 1)
+					frontier2.push((childNode.get_player_loc(), childNode.get_box_coordinates()), heuristicVal + g2 + 1)
+					path.push(currentMove + [move], heuristicVal + g2 + 1)
+				else:
+					repeatedNodes += 1
+
+	def compute_cost(self, list):
+		g = 0
+		for i in list:
+			if i.islower():
+				g += 1
+		return g
 
 	def corner_deadlock(self, boardObject):
 		boardObject.make_board_grid()
@@ -234,6 +323,94 @@ class Game:
 						return True
 		return False
 
+	def pre_corner_deadlock2(self, boardObject):
+		boardObject.make_board_grid()
+		boardGrid = boardObject.get_board_grid()
+		h = boardObject.get_sizeH()
+		v = boardObject.get_sizeV()
+		boxCoordinates = boardObject.get_box_coordinates()
+		storCoordinates = boardObject.get_stor_coordinates()
+		for coord in boxCoordinates:
+			left_wall = False
+			right_wall = False
+			(m, n) = (coord[0], coord[1])
+			for k in range(n):
+				if not left_wall:
+					if boardGrid[m][n-k-1] == '#':
+						left_wall = True
+						left_wall_coord = n-k-1
+				if not right_wall:
+					if n+k < h:
+						if boardGrid[m][n+k] == '#':
+							right_wall = True
+							right_wall_coord = n+k
+			if left_wall and right_wall:
+				boardObject.display_board()
+				# This means we have this  # (free floor) $ (free floor)#
+				upper_bound = True
+				lower_bound = True
+				for i in range(left_wall_coord+1, right_wall_coord):
+					# upper bound
+					if boardGrid[m-1][i] != '#':
+						upper_bound = False
+					if boardGrid[m+1][i] != '#':
+						lower_bound = False
+				if upper_bound:
+					# This means we have this  #######(walls)###########
+					#						  #(free floor)$(free floor)#
+					for store in storCoordinates:
+						if store[0] == m:
+							if store[1] > left_wall_coord and store[1] < right_wall_coord:
+								# There is a storLocation between the two places so there is no deadlock
+								return False
+					print("WE HAVE A FUCKING UPPER DEADLOOOOCK!!!! ")
+					return True
+				if lower_bound:
+					# This means we have this  #(free floor)$(free floor)#
+					#						    ########(walls)##########
+					for store in storCoordinates:
+						if store[0] == n:
+							if store[1] > left_wall_coord and store[1] < right_wall_coord:
+								# There is a storLocation between the two places so there is no deadlock
+								return False
+					return True
+			# Now let's flip the board and check the same vertically
+			upper_wall = False
+			lower_wall = False
+			for l in range(m):
+				if not upper_wall:
+					if boardGrid[m-l-1][n] == '#':
+						upper_wall = True
+						upper_wall_coord = m-l-1
+				if not lower_wall:
+					if m+l < v:
+						if boardGrid[m+l][n] == '#':
+							lower_wall = True
+							lower_wall_coord = m+l
+			if upper_wall and lower_wall:
+				right_bound = True
+				left_bound = True
+				for i in range(upper_wall_coord+1, lower_wall_coord):
+					if boardGrid[i][n+1] != '#':
+						right_bound = False
+					if boardGrid[i][n-1] != '#':
+						left_bound = False
+				if right_bound:
+					for store in storCoordinates:
+						if store[1] == n:
+							if store[0] > upper_wall_coord and store[0] < lower_wall_coord:
+								# There is a storLocation between the two places so there is no deadlock
+								return False
+					return True
+				if left_bound:
+					for store in storCoordinates:
+						if store[0] == n:
+							if store[1] > upper_wall_coord and store[1] < lower_wall_coord:
+								# There is a storLocation between the two places so there is no deadlock
+								return False
+					return True
+		return False
+
 	def square_block_deadlock(self, boardObject):
 		boardObject.make_board_grid()
 		boardGrid = boardObject.get_board_grid()
@@ -252,46 +429,7 @@ class Game:
 						return True
 		return False
 
-	""" This one looks tricky so I don't know if the implementation is okay.
-		The idea is for every storCoordinates, when you put a box in a goal state, choose the other closest box.
-		The closest one can't go there right? What would happen if the second one
-		should have been the one there instead? We check if the closest can go to another storLoc"""
-	def should_have_been_me_deadlock(self, boardObject):
-		boardObject.make_board_grid()
-		boardGrid = boardObject.get_board_grid()
-		boxCoordinates = boardObject.get_box_coordinates()
-		storCoordinates = boardObject.get_stor_coordinates()
-		boxCoord1 = (0, 0)
-		distCoord1 = 10000
-		for storage in storCoordinates:
-			for box in boxCoordinates:
-				dist = abs(storage[0] - box[0])+abs(storage[1] - box[1])
-				if dist < distCoord1:
-					boxCoord1 = box
-					distCoord1 = dist
-			# Now here we have the closest box to a specific occupied storage
-			# Let's see if this box can go to another storageLocation or not
-			# new_grid = convertBoxesToWalls
-			#
-			# storCoordinates = removeOccupiedStorage...
-			modified_boardObject = boardObject
-			# Now we check if the player can but the other box on another location
-			if not feasible_path(modified_boardObject, storCoordinates, closestBox):
-				return True
-		return False
-
-
-	def feasible_path(self, modified_boardObject, storCoordinates, closestBox):
-		# The idea here is to define a BFS that gets as input the modified Board with only one box and storageLocation
-		# if it cannot find a feasible solution on all those storageLocations
-		for storage in storCoordinates:
-			moves = self.play_BFS_2(modified_boardObject, storage, closestBox)
-			if moves = None:
-				return False
-			else:
-				return True
-
 	def is_deadlock(self, boardObject):
-		if self.corner_deadlock(boardObject) or self.pre_corner_deadlock(boardObject) or self.square_block_deadlock(boardObject):
+		if self.corner_deadlock(boardObject) or self.pre_corner_deadlock(boardObject) or self.square_block_deadlock(boardObject) or self.pre_corner_deadlock2(boardObject):
 			return True
 		return False
