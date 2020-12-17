@@ -30,7 +30,8 @@ The Solver will try to solve the game and return a sequence of the form `n UUDDR
 
 * Make sure that you place your board configuration file (representation of the board that looks like input00.txt or something similar) in the `input_files` folder
 * Type `python sokoban_input_converter.py`
-* The above step will convert the board from an inputXY.txt format to sokobanXY.txt. The latter format can be used as an input to `sokoban.py`.
+* You will see a prompt asking you to enter the file number which you want to convert. For example, to covert input00.txt to sokoban00.txt, enter 00 to the prompt.  
+* sokoban_input_converter will convert the board from an inputXY.txt format to sokobanXY.txt. The latter format can be used as an input to `sokoban.py`.
 
 ## Motivation
 
