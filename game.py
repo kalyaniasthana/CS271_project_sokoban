@@ -5,9 +5,6 @@ from math import ceil
 from priority_queue import PriorityQueue
 from time import time
 
-FOUND = 999999999
-NOT_FOUND = -999999999
-
 class Game:
 	def __init__(self, board):
 		self.board = board
@@ -258,6 +255,7 @@ class Game:
 						deadlockConditions += 1
 						continue
 					heuristicVal = H.calculate(childNode.get_stor_coordinates(), childNode.get_box_coordinates())
+					print('Free of Problems')
 					childNode.make_board_grid()
 					childNode.display_board()
 					g = len(currentMove)
@@ -272,6 +270,8 @@ class Game:
 		g = 0
 		for i in list:
 			if i.islower():
+				g += 2
+			else:
 				g += 1
 		return g
 
@@ -364,7 +364,7 @@ class Game:
 								return False
 					print("WE HAVE A FUCKING UPPER DEADLOOOOCK!!!! ")
 					boardObject.display_board()
-					print(" ")
+					print(coord)
 					print(" ")
 					return True
 				if lower_bound:
