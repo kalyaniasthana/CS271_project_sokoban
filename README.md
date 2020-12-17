@@ -1,11 +1,11 @@
 # Sokoban Solver using A* Search
 Sokoban is a game played on a board of squares, where each square/coordinate of the board can be either a wall, a box, a player, a storage location or just the empty floor. The player is allowed to move vertically or horizontally to empty floor squares and storage locations only. The player can move to these locations either while pushing a box or without pushing a box. The goal of the player in this game is to move all boxes to storage locations. For more details on this game or our solver, check out our project report document.
 
-## Setup Instructions
+## Build Instructions
 
 This game is written in `Python` (specifically version 3.7.6 but works with any Python3 version). It doesn't require any fancy modules apart from some which come preinstalled with Python namely `math, time and os`. 
 
-To run it, navigate to the Solver's folder on the termianl and type `python sokoban.py`. Doing this will show you prompt which will ask you the enter the file number (from the input_files folder) of the board which you want to solve. For example, to solve the board input00.txt, enter 00 to the prompt.  
+To run it, navigate to the Solver's folder on the terminal and type `python sokoban.py`. Doing this will show you prompt which will ask you the enter the file number (from the input_files folder) of the board which you want to solve. For example, to solve the board sokoban00.txt, enter 00 to the prompt.  
 \
 The Solver will try to solve the game and return a sequence of the form `n UUDDRRLL...` if such a solution is found, and `SOLUTION NOT FOUND` otherwise.
 
@@ -25,6 +25,12 @@ The Solver will try to solve the game and return a sequence of the form `n UUDDR
 
 * Prints out the final board if a solution is found \
 ![alt text](screenshots/screenshot_5.png)
+
+## Want to test your own input ? 
+
+* Make sure that you place your board configuration file (representation of the board that looks like input00.txt or something similar) in the `input_files` folder
+* Type `python sokoban_input_converter.py`
+* The above step will convert the board from an inputXY.txt format to sokobanXY.txt. The latter format can be used as an input to `sokoban.py`.
 
 ## Motivation
 
