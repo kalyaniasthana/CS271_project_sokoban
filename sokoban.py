@@ -14,6 +14,8 @@ def main():
 	# game.play_moves(['r', 'r', 'd', 'd', 'd', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'u', 'L',
 	 # 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'u', 'l', 'D', 'D', 'D', 'D', 'r', 'd', 'L'])
 	print(game.play_AStar())
+	# print(game.play_AStar_fix_f())
+	# print(game.play_IDAStar())
 	print('Tree Depth: {}, Average Branching Factor: {}'.format(game.treeDepth, game.branchingFactor))
 	# moves = list('rDlddrrruuLLrrddllUdrruulullDRddl')
 	# print(len(moves))

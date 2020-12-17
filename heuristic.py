@@ -12,7 +12,7 @@ class Heuristic:
 		if self.name == "manhattan" or self.name == None:
 			for box in boxCoordinates:
 				for storage in storCoordinates:
-					heuristicVal += (abs(storage[0] - box[0])+abs(storage[1] - box[1])) # WHAT THE HECK DO storage() AND box() RETURN? 
+					heuristicVal += (abs(storage[0] - box[0])+abs(storage[1] - box[1])) # WHAT THE HECK DO storage() AND box() RETURN?
 		elif self.name == "euclidean":
 			for box in boxCoordinates:
 				for storage in storCoordinates:

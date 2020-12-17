@@ -5,6 +5,9 @@ from math import ceil
 from priority_queue import PriorityQueue
 from time import time
 
+FOUND = float('Inf')
+NOT_FOUND = float('-Inf')
+
 class Game:
 	def __init__(self, board):
 		self.board = board
@@ -27,7 +30,7 @@ class Game:
 					print("COULD NOT UPDATE BOARD!")
 				if self.board.is_goal_state():
 					print("REACHED GOAL STATE!")
-					break 
+					break
 
 	def play_BFS(self):
 		start = time()
@@ -49,9 +52,9 @@ class Game:
 			return 'BOARD IS ALREADY IN GOAL STATE!', (end - start)
 
 		frontier1 = [rootNode]
-		# we need another frontier since with player and box locations since deepcopy() created a new object 
-		# with a new pointer each time 
-		frontier2 = [(rootNode.get_player_loc(), rootNode.get_box_coordinates())] 
+		# we need another frontier since with player and box locations since deepcopy() created a new object
+		# with a new pointer each time
+		frontier2 = [(rootNode.get_player_loc(), rootNode.get_box_coordinates())]
 		path = [['']]
 		visited = []
 
@@ -66,7 +69,7 @@ class Game:
 
 			currentNode = frontier1.pop(0)
 			(currentPlayer, currentBoxCoordinates) = frontier2.pop(0)
-			currentMove = path.pop(0)
+			currentActionSequence = path.pop(0)
 
 			possibleMoves = currentNode.possible_moves()
 			visited.append((currentPlayer, currentBoxCoordinates))
@@ -80,7 +83,7 @@ class Game:
 						childNode.make_board_grid()
 						childNode.display_board()
 						end = time()
-						return 'SOLUTION FOUND!', ','.join(currentMove[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
+						return 'SOLUTION FOUND!', ','.join(currentActionSequence[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
 						# return None
 					if self.is_deadlock(childNode):
 						print('DEADLOCK CONDITION')
@@ -88,7 +91,7 @@ class Game:
 						continue
 					frontier1.append(childNode)
 					frontier2.append((childNode.get_player_loc(), childNode.get_box_coordinates()))
-					path.append(currentMove + [move])
+					path.append(currentActionSequence + [move])
 				else:
 					repeatedNodes += 1
 
@@ -142,7 +145,7 @@ class Game:
 
 			currentNode = frontier1.pop()
 			(currentPlayer, currentBoxCoordinates) = frontier2.pop()
-			currentMove = path.pop()
+			currentActionSequence = path.pop()
 
 			possibleMoves = currentNode.possible_moves()
 			visited.append((currentPlayer, currentBoxCoordinates))
@@ -162,7 +165,7 @@ class Game:
 						childNode.display_board()
 						end = time()
 						self.branchingFactor = ceil(b/len(visited))# average branching factor
-						return 'SOLUTION FOUND!', ','.join(currentMove[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
+						return 'SOLUTION FOUND!', ','.join(currentActionSequence[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
 						# return None
 					if self.is_deadlock(childNode):
 						print('DEADLOCK CONDITION')
@@ -170,13 +173,108 @@ class Game:
 						continue
 
 					heuristicVal = H.calculate(childNode.get_stor_coordinates(), childNode.get_box_coordinates())
+					cost = self.compute_cost(currentActionSequence + [move])
 					childNode.make_board_grid()
 					childNode.display_board()
-					frontier1.push(childNode, heuristicVal)
-					frontier2.push((childNode.get_player_loc(), childNode.get_box_coordinates()), heuristicVal)
-					path.push(currentMove + [move], heuristicVal)
+					frontier1.push(childNode, heuristicVal + cost)
+					frontier2.push((childNode.get_player_loc(), childNode.get_box_coordinates()), heuristicVal + cost)
+					path.push(currentActionSequence + [move], heuristicVal + cost)
 				else:
 					repeatedNodes += 1		
+
+	# def play_AStar_fix_f(self):
+	# 	start = time()
+
+	# 	rootNode = deepcopy(self.board)
+	# 	generatedNodes, repeatedNodes = 1, 0
+
+	# 	if not rootNode.get_stor_coordinates():
+	# 		end = time()
+	# 		return 'THERE ARE NO STORAGE LOCATIONS!', (end - start)
+	# 	if not rootNode.get_box_coordinates():
+	# 		end = time()
+	# 		return 'THERE ARE NO BOX LOCATIONS!', (end - start)
+	# 	if not rootNode.get_player_loc():
+	# 		end = time()
+	# 		return 'SOKOBAN PLAYER MISSING!', (end - start)
+	# 	if rootNode.is_goal_state():
+	# 		end = time()
+	# 		return 'BOARD IS ALREADY IN GOAL STATE!', (end - start)
+
+	# 	H = Heuristic()
+	# 	# H.set_heuristic("manhattan2")
+	# 	heuristicVal = H.calculate(rootNode.get_stor_coordinates(), rootNode.get_box_coordinates())
+	# 	g = 0
+	# 	frontier1 = PriorityQueue()
+	# 	frontier2 = PriorityQueue()
+	# 	path = PriorityQueue()
+
+	# 	frontier1.push(rootNode, heuristicVal)
+	# 	frontier2.push((rootNode.get_player_loc(), rootNode.get_box_coordinates()), g + heuristicVal)
+	# 	path.push([''], g + heuristicVal)
+	# 	visited = []
+
+	# 	deadlockConditions = 0
+
+	# 	# Hamza: This i represents the number of states visited, I think generated Nodes does not apply because
+	# 	# we don't explore possible moves for all of the generated nodes so the branching factor cannot use this value
+	# 	# i, b = 0, 0 # don't really need i since we can just do len(visited) for this
+	# 	b = 0
+	# 	self.branchingFactor = 0
+	# 	self.treeDepth = 0
+
+	# 	while True:
+	# 		print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
+	# 			generatedNodes, repeatedNodes, len(frontier1.Heap), deadlockConditions))
+	# 		if not frontier1.Heap:
+	# 			end = time()
+	# 			return 'SOLUTION NOT FOUND', (end - start)
+
+	# 		currentNode = frontier1.pop()
+	# 		(currentPlayer, currentBoxCoordinates) = frontier2.pop()
+	# 		currentActionSequence = path.pop()
+
+	# 		possibleMoves = currentNode.possible_moves()
+	# 		visited.append((currentPlayer, currentBoxCoordinates))
+
+	# 		# Tree depth and branch factor variables
+	# 		b += len(possibleMoves) # branching factor of the current node
+	# 		# i = len(visited) # number of visited nodes
+	# 		self.treeDepth += 1
+
+	# 		for move in possibleMoves:
+	# 			childNode = deepcopy(currentNode)
+	# 			generatedNodes += 1
+	# 			childNode.update_board(move)
+	# 			if (childNode.get_player_loc(), childNode.get_box_coordinates()) not in visited:
+	# 				if childNode.is_goal_state():
+	# 					childNode.make_board_grid()
+	# 					childNode.display_board()
+	# 					end = time()
+	# 					self.branchingFactor = ceil(b/len(visited))# average branching factor
+	# 					return 'SOLUTION FOUND!', ','.join(currentActionSequence[1:] + [move]).replace(',',''), str((end - start)) + ' seconds'
+	# 					# return None
+	# 				if self.is_deadlock(childNode):
+	# 					print('DEADLOCK CONDITION')
+	# 					deadlockConditions += 1
+	# 					continue
+	# 				heuristicVal = H.calculate(childNode.get_stor_coordinates(), childNode.get_box_coordinates())
+	# 				childNode.make_board_grid()
+	# 				childNode.display_board()
+	# 				g = len(currentActionSequence)
+	# 				g2 = self.compute_cost(currentActionSequence)
+	# 				frontier1.push(childNode, heuristicVal + g2 + 1)
+	# 				frontier2.push((childNode.get_player_loc(), childNode.get_box_coordinates()), heuristicVal + g2 + 1)
+	# 				path.push(currentActionSequence + [move], heuristicVal + g2 + 1)
+	# 			else:
+	# 				repeatedNodes += 1
+
+	def compute_cost(self, actions):
+		cost = 0
+		for action in actions:
+			if action.islower():
+				cost += 1
+		return cost
 
 	def corner_deadlock(self, boardObject):
 		boardObject.make_board_grid()
@@ -226,6 +324,96 @@ class Game:
 						return True
 		return False
 
+	def pre_corner_deadlock2(self, boardObject):
+		boardObject.make_board_grid()
+		boardGrid = boardObject.get_board_grid()
+		h = boardObject.get_sizeH()
+		v = boardObject.get_sizeV()
+		boxCoordinates = boardObject.get_box_coordinates()
+		storCoordinates = boardObject.get_stor_coordinates()
+		for coord in boxCoordinates:
+			left_wall = False
+			right_wall = False
+			(m, n) = (coord[0], coord[1])
+			for k in range(n):
+				if not left_wall:
+					if boardGrid[m][n-k-1] == '#':
+						left_wall = True
+						left_wall_coord = n-k-1
+				if not right_wall:
+					if n+k < h:
+						if boardGrid[m][n+k] == '#':
+							right_wall = True
+							right_wall_coord = n+k
+			if left_wall and right_wall:
+				# This means we have this  # (free floor) $ (free floor)#
+				upper_bound = True
+				lower_bound = True
+				for i in range(left_wall_coord+1, right_wall_coord):
+					# upper bound
+					if boardGrid[m-1][i] != '#':
+						upper_bound = False
+					if boardGrid[m+1][i] != '#':
+						lower_bound = False
+				if upper_bound:
+					# This means we have this  #######(walls)###########
+					#						  #(free floor)$(free floor)#
+					for store in storCoordinates:
+						if store[0] == m:
+							if store[1] > left_wall_coord and store[1] < right_wall_coord:
+								# There is a storLocation between the two places so there is no deadlock
+								return False
+					# print("WE HAVE AN UPPER DEADLOCK!")
+					# boardObject.display_board()
+					# print(" ")
+					# print(" ")
+					return True
+				if lower_bound:
+					# This means we have this  #(free floor)$(free floor)#
+					#						    ########(walls)##########
+					for store in storCoordinates:
+						if store[0] == n:
+							if store[1] > left_wall_coord and store[1] < right_wall_coord:
+								# There is a storLocation between the two places so there is no deadlock
+								return False
+					return True
+			# Now let's flip the board and check the same vertically
+			upper_wall = False
+			lower_wall = False
+			for l in range(m):
+				if not upper_wall:
+					if boardGrid[m-l-1][n] == '#':
+						upper_wall = True
+						upper_wall_coord = m-l-1
+				if not lower_wall:
+					if m+l < v:
+						if boardGrid[m+l][n] == '#':
+							lower_wall = True
+							lower_wall_coord = m+l
+			if upper_wall and lower_wall:
+				right_bound = True
+				left_bound = True
+				for i in range(upper_wall_coord+1, lower_wall_coord):
+					if boardGrid[i][n+1] != '#':
+						right_bound = False
+					if boardGrid[i][n-1] != '#':
+						left_bound = False
+				if right_bound:
+					for store in storCoordinates:
+						if store[1] == n:
+							if store[0] > upper_wall_coord and store[0] < lower_wall_coord:
+								# There is a storLocation between the two places so there is no deadlock
+								return False
+					return True
+				if left_bound:
+					for store in storCoordinates:
+						if store[0] == n:
+							if store[1] > upper_wall_coord and store[1] < lower_wall_coord:
+								# There is a storLocation between the two places so there is no deadlock
+								return False
+					return True
+		return False
+
 	def square_block_deadlock(self, boardObject):
 		boardObject.make_board_grid()
 		boardGrid = boardObject.get_board_grid()
@@ -245,6 +433,7 @@ class Game:
 		return False
 
 	def is_deadlock(self, boardObject):
-		if self.corner_deadlock(boardObject) or self.pre_corner_deadlock(boardObject) or self.square_block_deadlock(boardObject):
+		if self.corner_deadlock(boardObject) or self.pre_corner_deadlock(boardObject) or \
+		self.square_block_deadlock(boardObject) or self.pre_corner_deadlock2(boardObject):
 			return True
 		return False
