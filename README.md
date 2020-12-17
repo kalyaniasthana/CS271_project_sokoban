@@ -1,0 +1,1 @@
+This is a Sokoban solver using A* search algorithm. To run it, first run sokoban.py. Then, when prompted, enter the file name of input. The algorithm will try to solve the game and return a sequence of the form "n UUDDRRLL..." if such a solution is found, and "SOLUTION NOT FOUND" otherwise.
