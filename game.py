@@ -15,7 +15,7 @@ class Game:
 		self.board.parse()
 		self.board.make_board_grid()
 		self.board.display_board()
-		self.branchingFactor, self.solutionDepth = 0, 0
+		self.branchingFactor, self.treeDepth = 0, 0
 
 	def play_moves(self, moves):
 		if moves: # moves is a list of moves/actions. For example, moves = ['l', 'u', 'U', 'U', 'U']
@@ -115,7 +115,7 @@ class Game:
 			return 'BOARD IS ALREADY IN GOAL STATE!', (end - start)
 
 		H = Heuristic()
-		# H.set_heuristic()
+		# H.set_heuristic("manhattan2")
 		heuristicVal = H.calculate(rootNode.get_stor_coordinates(), rootNode.get_box_coordinates())
 
 		frontier1 = PriorityQueue()
@@ -132,9 +132,9 @@ class Game:
 		# Hamza: This i represents the number of states visited, I think generated Nodes does not apply because
 		# we don't explore possible moves for all of the generated nodes so the branching factor cannot use this value
 		# i, b = 0, 0 # don't really need i since we can just do len(visited) for this
-		b = 0 
+		b = 0
 		self.branchingFactor = 0
-		self.solutionDepth = 0
+		self.treeDepth = 0
 
 		while True:
 			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
@@ -153,6 +153,7 @@ class Game:
 			# Tree depth and branch factor variables
 			b += len(possibleMoves) # branching factor of the current node
 			# i = len(visited) # number of visited nodes
+			self.treeDepth += 1
 
 			for move in possibleMoves:
 				childNode = deepcopy(currentNode)
@@ -164,8 +165,7 @@ class Game:
 						childNode.display_board()
 						end = time()
 						self.branchingFactor = ceil(b/len(visited))# average branching factor
-						self.solutionDepth = len(currentActionSequence[1: ] + [move])
-						return  str(len(currentActionSequence[1:] + [move])) + ' ' + ''.join(map(lambda x:x.upper(), currentActionSequence[1:] + [move])).replace(',','') , str((end - start)) + ' seconds'
+						return  str(len(currentActionSequence[1:] + [move])) + ' ' + ''.join(map(lambda x:x.upper(), currentActionSequence[1:] + [move])).replace(',','') #, str((end - start)) + ' seconds'
 						# return None
 					if self.is_deadlock(childNode):
 						print('DEADLOCK CONDITION')
@@ -180,7 +180,7 @@ class Game:
 					frontier2.push((childNode.get_player_loc(), childNode.get_box_coordinates()), heuristicVal + cost)
 					path.push(currentActionSequence + [move], heuristicVal + cost)
 				else:
-					repeatedNodes += 1		
+					repeatedNodes += 1
 
 	# def play_AStar_fix_f(self):
 	# 	start = time()
@@ -221,7 +221,7 @@ class Game:
 	# 	# i, b = 0, 0 # don't really need i since we can just do len(visited) for this
 	# 	b = 0
 	# 	self.branchingFactor = 0
-	# 	self.solutionDepth = 0
+	# 	self.treeDepth = 0
 
 	# 	while True:
 	# 		print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
@@ -240,7 +240,7 @@ class Game:
 	# 		# Tree depth and branch factor variables
 	# 		b += len(possibleMoves) # branching factor of the current node
 	# 		# i = len(visited) # number of visited nodes
-	# 		self.solutionDepth += 1
+	# 		self.treeDepth += 1
 
 	# 		for move in possibleMoves:
 	# 			childNode = deepcopy(currentNode)
@@ -437,3 +437,131 @@ class Game:
 		self.square_block_deadlock(boardObject) or self.pre_corner_deadlock2(boardObject):
 			return True
 		return False
+
+
+	###### EXPERIMENTAL ZONE ######
+
+	def manhattan3_heuristic(self, boxCoordinates, storCoordinates, playerLoc):
+		heuristicVal = 0
+		if self.name == "manhattan" or self.name == None:
+			for box in boxCoordinates:
+				smallestBoxDist = float('Inf')
+				smallestBoxCoordToPlayer = (0,0)
+				for storage in storCoordinates:
+					heuristicVal += (abs(storage[0] - box[0])+abs(storage[1] - box[1])) # WHAT THE HECK DO storage() AND box() RETURN?
+				distance_box_to_player = (abs(playerLoc[0] - box[0])+abs(storage[1] - playerLoc[1]))
+				if dist_box_to_storage < smallestBoxDist:
+					smallestBoxDist =  dist_box_to_storage
+					smallestBoxCoordToPlayer = box
+			heuristicVal += smallestBoxDist
+
+	def manhattan4_heuristic(self, boxCoordinates, storCoordinates):
+		elif self.name == "manhattan3":
+			boxes = deepcopy(boxCoordinates)
+			stores = deepcopy(storCoordinates)
+			for box in boxes:
+				smallestBoxDist = float('Inf')
+				smallestStorCoord = (0, 0)
+				for storage in stores:
+					dist_box_to_storage = (abs(storage[0] - box[0])+abs(storage[1] - box[1]))
+					if dist_box_to_storage < smallestBoxDist:
+						smallestBoxDist =  dist_box_to_storage
+						smallestStorCoord = storage
+				boxCopy = boxCoordinates
+				boxCopy.remove(box)
+				for box_2 in boxCopy:
+					dist_box_2_to_storage = (abs(smallestStorCoord[0] - box_2[0])+abs(smallestStorCoord[1] - box_2[1]))
+					if dist_box_2_to_storage < smallestBoxDist:
+						storCopy = storCoordinates
+						storCopy.remove(smallestStorCoord)
+						heuristicVal += dist_box_2_to_storage
+						boxes.remove(box_2)
+						boxCopy.remove(box_2)
+						for store_2 in storeCopy:
+							dist_box_to_storage = (abs(store_2[0] - box[0])+abs(store_2[1] - box[1]))
+							if dist_box_to_storage < smallestBoxDist:
+								smallestBoxDist =  dist_box_to_storage
+								smallestStorCoord = storage
+				stores.remove(smallestStorCoord)
+				heuristicVal += smallestBoxDist
+
+	#Push heuristic
+	def update_directions(self, currentPos, smallestStorCoord):
+		# if x_direction is True we move right, else left
+		if currentPos[0] - smallestStorCoord[0] > 0:
+			# Closest Stor Location is at left
+			x_direction = False
+		else:
+			x_direction = True
+
+		# if y_direction is True we move down, else up
+		if currentPos[1] - smallestStorCoord[1] > 0:
+			# Closest Stor Location is up
+			y_direction = False
+		else:
+			y_direction = True
+
+		return x_direction, y_direction
+
+	def compute_pushHeuristic(self, boardObject):
+		pushes = 0
+		storCoordinates = boardObject.get_stor_coordinates()
+		boxCoordinates = boardObject.get_box_coordinates()
+		boardGrid = boardObject.get_board_grid()
+		h = boardObject.get_sizeH()
+		v = boardObject.get_sizeV()
+		for box in boxCoordinates:
+			print(box)
+			smallestBoxDist = float('Inf')
+			smallestStorCoord = (0,0)
+			for storage in storCoordinates:
+				dist_box_to_storage = (abs(storage[0] - box[0])+abs(storage[1] - box[1]))
+				if dist_box_to_storage < smallestBoxDist:
+					smallestBoxDist =  dist_box_to_storage
+					smallestStorCoord = storage
+			print(smallestStorCoord)
+			currentPos = box
+			x_direction, y_direction = self.update_directions(currentPos, smallestStorCoord)
+			tries = 0
+			while currentPos[0] != smallestStorCoord[0] and currentPos[1] != smallestStorCoord[1] or tries > 100:
+				tries += 1
+				x = currentPos[0]
+				y = currentPos[1]
+				if y_direction:
+					# moving down!
+					if y + 1 < v-1:
+						if boardGrid[x+1][y] != '#' and boardGrid[x+1][y] != '$':
+							currentPos = (x + 1, currentPos[1])
+							pushes += 1
+							x_direction, y_direction = self.update_directions(currentPos, smallestStorCoord)
+					else:
+						y_direction = False
+				else:
+					# moving up!
+					if x - 1 > 0:
+						if boardGrid[x-1][y] != '#' and boardGrid[x-1][y] != '$':
+							currentPos = (x - 1, currentPos[1])
+							pushes += 1
+							x_direction, y_direction = self.update_directions(currentPos, smallestStorCoord)
+					else:
+						y_direction = True
+				if x_direction:
+					# moving right!
+					if y + 1 < h-1:
+						if boardGrid[x][y+1] != '#' and boardGrid[x+1][y+1] != '$':
+							currentPos = (currentPos[0], y + 1)
+							pushes += 1
+							x_direction, y_direction = self.update_directions(currentPos, smallestStorCoord)
+					else:
+						x_direction = False
+				else:
+					# moving left!
+					if y - 1 >= 0:
+						if boardGrid[x][y] != '#' and boardGrid[x-1][y-1] != '$':
+							currentPos = (currentPos[0], y - 1)
+							pushes += 1
+							x_direction, y_direction = self.update_directions(currentPos, smallestStorCoord)
+
+					else:
+						x_direction = True
+		return pushes
