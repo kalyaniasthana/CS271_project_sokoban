@@ -456,7 +456,7 @@ class Game:
 			heuristicVal += smallestBoxDist
 
 	def manhattan4_heuristic(self, boxCoordinates, storCoordinates):
-		elif self.name == "manhattan3":
+		if self.name == "manhattan3":
 			boxes = deepcopy(boxCoordinates)
 			stores = deepcopy(storCoordinates)
 			for box in boxes:
