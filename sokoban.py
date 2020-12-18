@@ -16,7 +16,7 @@ def main():
 	print(game.play_AStar())
 	# print(game.play_AStar_fix_f())
 	# print(game.play_IDAStar())
-	# print('Tree Depth: {}, Average Branching Factor: {}'.format(game.treeDepth, game.branchingFactor))
+	# print('Tree Depth: {}, Average Branching Factor: {}'.format(game.solutionDepth, game.branchingFactor))
 	# moves = list('rDlddrrruuLLrrddllUdrruulullDRddl')
 	# print(len(moves))
 	# game.play_moves(moves)

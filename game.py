@@ -15,7 +15,7 @@ class Game:
 		self.board.parse()
 		self.board.make_board_grid()
 		self.board.display_board()
-		self.branchingFactor, self.treeDepth = 0, 0
+		self.branchingFactor, self.solutionDepth = 0, 0
 
 	def play_moves(self, moves):
 		if moves: # moves is a list of moves/actions. For example, moves = ['l', 'u', 'U', 'U', 'U']
@@ -115,7 +115,7 @@ class Game:
 			return 'BOARD IS ALREADY IN GOAL STATE!', (end - start)
 
 		H = Heuristic()
-		# H.set_heuristic("manhattan2")
+		# H.set_heuristic()
 		heuristicVal = H.calculate(rootNode.get_stor_coordinates(), rootNode.get_box_coordinates())
 
 		frontier1 = PriorityQueue()
@@ -134,7 +134,7 @@ class Game:
 		# i, b = 0, 0 # don't really need i since we can just do len(visited) for this
 		b = 0 
 		self.branchingFactor = 0
-		self.treeDepth = 0
+		self.solutionDepth = 0
 
 		while True:
 			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
@@ -153,7 +153,6 @@ class Game:
 			# Tree depth and branch factor variables
 			b += len(possibleMoves) # branching factor of the current node
 			# i = len(visited) # number of visited nodes
-			self.treeDepth += 1
 
 			for move in possibleMoves:
 				childNode = deepcopy(currentNode)
@@ -165,7 +164,8 @@ class Game:
 						childNode.display_board()
 						end = time()
 						self.branchingFactor = ceil(b/len(visited))# average branching factor
-						return  str(len(currentActionSequence[1:] + [move])) + ' ' + ''.join(map(lambda x:x.upper(), currentActionSequence[1:] + [move])).replace(',','') #, str((end - start)) + ' seconds'
+						self.solutionDepth = len(currentActionSequence[1: ] + [move])
+						return  str(len(currentActionSequence[1:] + [move])) + ' ' + ''.join(map(lambda x:x.upper(), currentActionSequence[1:] + [move])).replace(',','') , str((end - start)) + ' seconds'
 						# return None
 					if self.is_deadlock(childNode):
 						print('DEADLOCK CONDITION')
@@ -221,7 +221,7 @@ class Game:
 	# 	# i, b = 0, 0 # don't really need i since we can just do len(visited) for this
 	# 	b = 0
 	# 	self.branchingFactor = 0
-	# 	self.treeDepth = 0
+	# 	self.solutionDepth = 0
 
 	# 	while True:
 	# 		print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
@@ -240,7 +240,7 @@ class Game:
 	# 		# Tree depth and branch factor variables
 	# 		b += len(possibleMoves) # branching factor of the current node
 	# 		# i = len(visited) # number of visited nodes
-	# 		self.treeDepth += 1
+	# 		self.solutionDepth += 1
 
 	# 		for move in possibleMoves:
 	# 			childNode = deepcopy(currentNode)
