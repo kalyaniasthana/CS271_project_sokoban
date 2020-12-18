@@ -165,7 +165,7 @@ class Game:
 						# childNode.display_board()
 						end = time()
 						self.branchingFactor = ceil(b/len(visited))# average branching factor
-						return  str(len(currentActionSequence[1:] + [move])) + ' ' + ''.join(map(lambda x:x.upper(), currentActionSequence[1:] + [move])).replace(',','') #, str((end - start)) + ' seconds'
+						return  str(len(currentActionSequence[1:] + [move])) + ' ' + ' '.join(map(lambda x:x.upper(), currentActionSequence[1:] + [move])).replace(',','') #, str((end - start)) + ' seconds'
 						# return None
 					if self.is_deadlock(childNode):
 						# print('DEADLOCK CONDITION')
