@@ -5,12 +5,12 @@ from game import Game
 def main():
 	print("Enter sokoban board file number (example: 01) from input_files folder: ")
 	number = input()
-	print('-'*20)
+	# print('-'*20)
 	boardInputFile = os.path.join(os.getcwd(), 'input_files', 'sokoban'+str(number)+'.txt')
 	assert os.path.isfile(boardInputFile)
 	sokobanBoard = Board(boardInputFile)
 	game = Game(sokobanBoard)
-	print('-'*20)
+	# print('-'*20)
 	# game.play_moves(['r', 'r', 'd', 'd', 'd', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'u', 'L',
 	 # 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'u', 'l', 'D', 'D', 'D', 'D', 'r', 'd', 'L'])
 	print(game.play_AStar())

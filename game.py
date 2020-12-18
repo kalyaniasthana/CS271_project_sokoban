@@ -14,7 +14,7 @@ class Game:
 		assert isinstance(self.board, Board)
 		self.board.parse()
 		self.board.make_board_grid()
-		self.board.display_board()
+		# self.board.display_board()
 		self.branchingFactor, self.treeDepth = 0, 0
 
 	def play_moves(self, moves):
@@ -137,8 +137,8 @@ class Game:
 		self.treeDepth = 0
 
 		while True:
-			print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
-				generatedNodes, repeatedNodes, len(frontier1.Heap), deadlockConditions))
+			# print('Generated Nodes: {}, Repeated Nodes: {}, Frontier Length: {}, Deadlock Conditions: {}'.format(
+				# generatedNodes, repeatedNodes, len(frontier1.Heap), deadlockConditions))
 			if not frontier1.Heap:
 				end = time()
 				return 'SOLUTION NOT FOUND', (end - start)
@@ -162,13 +162,13 @@ class Game:
 				if (childNode.get_player_loc(), childNode.get_box_coordinates()) not in visited:
 					if childNode.is_goal_state():
 						childNode.make_board_grid()
-						childNode.display_board()
+						# childNode.display_board()
 						end = time()
 						self.branchingFactor = ceil(b/len(visited))# average branching factor
 						return  str(len(currentActionSequence[1:] + [move])) + ' ' + ''.join(map(lambda x:x.upper(), currentActionSequence[1:] + [move])).replace(',','') #, str((end - start)) + ' seconds'
 						# return None
 					if self.is_deadlock(childNode):
-						print('DEADLOCK CONDITION')
+						# print('DEADLOCK CONDITION')
 						deadlockConditions += 1
 						continue
 
